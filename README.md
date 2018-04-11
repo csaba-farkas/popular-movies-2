@@ -1,2 +1,3 @@
-# popular-movies-2
-Popular Movies - Stage 2
+# Popular Movies - Stage 2
+Built on top of Stage 1: https://github.com/lastminute84/popular-movies
+In development...
