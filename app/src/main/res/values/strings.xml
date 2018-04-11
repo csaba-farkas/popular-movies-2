@@ -1,0 +1,28 @@
+<resources>
+    <string name="app_name">Popular Movies</string>
+
+    <!-- Movie poster base URL -->
+    <string name="poster_base_url_185" translatable="false">http://image.tmdb.org/t/p/w185%s</string>
+    <!-- End of base URLs -->
+
+    <!-- Intent keys -->
+    <string name="movie_id_key" translatable="false">movieId</string>
+    <!-- End of intent keys -->
+
+    <!-- Alert dialog strings -->
+    <string name="failure_alert_dialog_title">Ooops</string>
+    <string name="failure_alert_dialog_message">We can\'t load the movie details this time. Please try again later. Error message for techies: </string>
+    <string name="error_alert_dialog_title">Network Error</string>
+    <string name="error_alert_dialog_message">We can\'t connect to the internet. Please check your connection and try again! Error message for techies:</string>
+    <!-- End of alert dialog strings -->
+
+    <!-- Menu item strings -->
+    <string name="menu_item_most_popular">Most Popular</string>
+    <string name="menu_item_top_rated">Top Rated</string>
+    <!-- End of menu item strings -->
+
+    <!-- Miscellaneous -->
+    <string name="lorem" translatable="false">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc ac sodales purus. Donec eu nisi est. Maecenas eget velit ac velit consectetur fermentum sit amet in tortor. Suspendisse ac nibh ut nisl viverra vulputate. Nullam aliquam, nisl non dapibus pharetra, ipsum elit dapibus neque, ac ultrices dolor turpis sit amet dui. Donec eu urna ut felis rutrum convallis vitae nec tellus. Praesent euismod erat ut ex ultricies, at bibendum justo lobortis. Proin faucibus aliquet porta. In nec euismod sapien. Sed sit amet lorem vitae massa commodo posuere. Integer interdum ex nibh, sed sagittis tellus cursus a. Praesent pharetra arcu euismod mauris accumsan vestibulum. Quisque dictum quam vitae mollis dignissim. Sed ut tempor ligula. Vestibulum pharetra ligula ex, et blandit massa scelerisque non.</string>
+    <string name="poster_image_description">Movie poster</string>
+    <!-- End of miscellaneous -->
+</resources>
