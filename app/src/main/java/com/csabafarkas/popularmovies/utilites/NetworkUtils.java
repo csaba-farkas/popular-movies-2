@@ -6,6 +6,7 @@ import com.csabafarkas.popularmovies.BuildConfig;
 import com.csabafarkas.popularmovies.models.Movie;
 import com.csabafarkas.popularmovies.models.MovieCollection;
 import com.csabafarkas.popularmovies.models.RetrofitError;
+import com.csabafarkas.popularmovies.models.TrailerCollection;
 import com.google.gson.Gson;
 
 import retrofit2.Call;
@@ -50,6 +51,32 @@ public final class NetworkUtils {
 
                     @Override
                     public void onFailure(@NonNull Call<Movie> call, @NonNull Throwable t) {
+                        callback.onError(t);
+                    }
+                });
+    }
+
+    public static void getTrailers(String apiKey, String movieId, final PopularMoviesNetworkCallback callback) {
+        MovieDbService movieDbService = getMovieDbService();
+
+        movieDbService.getTrailers(movieId, apiKey)
+                .enqueue(new Callback<TrailerCollection>() {
+                    @Override
+                    public void onResponse(Call<TrailerCollection> call, Response<TrailerCollection> response) {
+                        if (response.isSuccessful()) {
+                            callback.onSuccess(response.body());
+                        } else {
+                            Gson gson = new Gson();
+                            if (response.errorBody() == null) {
+                                callback.onFailure(new RetrofitError());
+                            }
+                            RetrofitError error = gson.fromJson(response.errorBody().charStream(), RetrofitError.class);
+                            callback.onFailure(error);
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<TrailerCollection> call, Throwable t) {
                         callback.onError(t);
                     }
                 });

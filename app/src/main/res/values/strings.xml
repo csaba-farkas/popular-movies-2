@@ -1,8 +1,9 @@
 <resources>
     <string name="app_name">Popular Movies</string>
 
-    <!-- Movie poster base URL -->
+    <!-- Base URLs -->
     <string name="poster_base_url_185" translatable="false">http://image.tmdb.org/t/p/w185%s</string>
+    <string name="youtube_trailer_url" translatable="false">https://www.youtube.com/watch?v=%s</string>
     <!-- End of base URLs -->
 
     <!-- Intent keys -->
@@ -24,5 +25,11 @@
     <!-- Miscellaneous -->
     <string name="lorem" translatable="false">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc ac sodales purus. Donec eu nisi est. Maecenas eget velit ac velit consectetur fermentum sit amet in tortor. Suspendisse ac nibh ut nisl viverra vulputate. Nullam aliquam, nisl non dapibus pharetra, ipsum elit dapibus neque, ac ultrices dolor turpis sit amet dui. Donec eu urna ut felis rutrum convallis vitae nec tellus. Praesent euismod erat ut ex ultricies, at bibendum justo lobortis. Proin faucibus aliquet porta. In nec euismod sapien. Sed sit amet lorem vitae massa commodo posuere. Integer interdum ex nibh, sed sagittis tellus cursus a. Praesent pharetra arcu euismod mauris accumsan vestibulum. Quisque dictum quam vitae mollis dignissim. Sed ut tempor ligula. Vestibulum pharetra ligula ex, et blandit massa scelerisque non.</string>
     <string name="poster_image_description">Movie poster</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="plot_tab_title">Plot</string>
+    <string name="trailers_tab_title">Trailers</string>
+    <string name="reviews_tab_title">Reviews</string>
     <!-- End of miscellaneous -->
 </resources>

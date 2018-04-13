@@ -72,6 +72,7 @@ public class MainActivity extends AppCompatActivity implements PopularMoviesNetw
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Intent intent = new Intent(MainActivity.this, MovieDetailsActivity.class);
+                // Intent intent = new Intent(MainActivity.this, MovieDetailsTabbedActivity.class);
                 intent.putExtra(getResources().getString(R.string.movie_id_key), movies.get(position).getId().toString());
                 startActivity(intent);
             }
