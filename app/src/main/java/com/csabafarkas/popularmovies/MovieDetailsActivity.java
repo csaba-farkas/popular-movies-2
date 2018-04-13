@@ -1,6 +1,7 @@
 package com.csabafarkas.popularmovies;
 
 import android.content.DialogInterface;
+import android.net.Uri;
 import android.support.design.widget.AppBarLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -22,7 +23,7 @@ import com.squareup.picasso.Picasso;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
-public class MovieDetailsActivity extends AppCompatActivity implements PopularMoviesNetworkCallback {
+public class MovieDetailsActivity extends AppCompatActivity implements PopularMoviesNetworkCallback, TrailerFragment.OnFragmentInteractionListener {
 
     @BindView(R.id.movie_details_poster_iv)
     ImageView posterImageView;
@@ -116,5 +117,10 @@ public class MovieDetailsActivity extends AppCompatActivity implements PopularMo
         progressBar.setVisibility(View.GONE);
         appBarLayout.setVisibility(View.VISIBLE);
         ratingBar.setVisibility(View.VISIBLE);
+    }
+
+    @Override
+    public void onFragmentInteraction(Uri uri) {
+        
     }
 }
