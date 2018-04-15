@@ -86,6 +86,8 @@ public class Movie implements Parcelable, PopularMoviesModel
     @SerializedName("vote_count")
     @Expose
     private Integer voteCount;
+    private List<Trailer> trailers;
+    private List<Review> reviews;
     public final static Parcelable.Creator<Movie> CREATOR = new Creator<Movie>() {
 
 
@@ -332,6 +334,23 @@ public class Movie implements Parcelable, PopularMoviesModel
 
     public void setVoteCount(Integer voteCount) {
         this.voteCount = voteCount;
+    }
+
+
+    public List<Trailer> getTrailers() {
+        return trailers;
+    }
+
+    public void setTrailers(List<Trailer> trailers) {
+        this.trailers = trailers;
+    }
+
+    public List<Review> getReviews() {
+        return reviews;
+    }
+
+    public void setReviews(List<Review> reviews) {
+        this.reviews = reviews;
     }
 
     public void writeToParcel(Parcel dest, int flags) {

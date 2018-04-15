@@ -1,17 +1,28 @@
 package com.csabafarkas.popularmovies;
 
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.graphics.drawable.Drawable;
+import android.net.Uri;
+import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.AppBarLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.DividerItemDecoration;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.view.View;
+import android.view.ViewTreeObserver;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.RatingBar;
 import android.widget.TextView;
 import android.support.v7.widget.Toolbar;
 
+import com.csabafarkas.popularmovies.adapters.ReviewAdapter;
+import com.csabafarkas.popularmovies.adapters.TrailerAdapter;
 import com.csabafarkas.popularmovies.models.Movie;
 import com.csabafarkas.popularmovies.models.PopularMoviesModel;
 import com.csabafarkas.popularmovies.models.RetrofitError;
@@ -19,10 +30,14 @@ import com.csabafarkas.popularmovies.utilites.NetworkUtils;
 import com.csabafarkas.popularmovies.utilites.PopularMoviesNetworkCallback;
 import com.squareup.picasso.Picasso;
 
+import butterknife.BindDrawable;
+import butterknife.BindString;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
-public class MovieDetailsActivity extends AppCompatActivity implements PopularMoviesNetworkCallback {
+public class MovieDetailsActivity extends AppCompatActivity
+            implements PopularMoviesNetworkCallback, TrailerAdapter.TrailerAdapterOnClickListener,
+                    ReviewAdapter.ReviewItemOnClickListener{
 
     @BindView(R.id.movie_details_poster_iv)
     ImageView posterImageView;
@@ -40,6 +55,20 @@ public class MovieDetailsActivity extends AppCompatActivity implements PopularMo
     ProgressBar progressBar;
     @BindView(R.id.main_appbar)
     AppBarLayout appBarLayout;
+    @BindView(R.id.movie_details_trailers_list)
+    RecyclerView trailersList;
+    @BindView(R.id.movie_details_reviews_list)
+    RecyclerView reviewsList;
+    @BindView(R.id.movie_details_constraint_layout)
+    ConstraintLayout constraintLayout;
+    @BindView(R.id.movie_details_favourite_button)
+    ImageButton favButton;
+    @BindString(R.string.youtube_trailer_url)
+    String youtubeBaseUrl;
+    @BindDrawable(R.drawable.ic_heart_red)
+    Drawable redHeartDrawable;
+    @BindDrawable(R.drawable.ic_heart_white)
+    Drawable whiteHeartDrawable;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -113,8 +142,82 @@ public class MovieDetailsActivity extends AppCompatActivity implements PopularMo
         String title = String.format(movie.getTitle() + " (%s)", year);
         titleToolbar.setTitle(title);
 
+        // set trailers adapter
+        LinearLayoutManager trailersLayoutManger =
+                new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
+
+        trailersList.setLayoutManager(trailersLayoutManger);
+        TrailerAdapter trailerAdapter;
+
+        // add trailers to list adapter - max number of trailers = 5
+        if (movie.getTrailers().size() <= 5)
+            trailerAdapter = new TrailerAdapter(this, movie.getTrailers(), this);
+        else
+            trailerAdapter = new TrailerAdapter(this, movie.getTrailers().subList(0, 5), this);
+        trailersList.setAdapter(trailerAdapter);
+
+        DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(
+                this,
+                LinearLayoutManager.VERTICAL
+        );
+        trailersList.addItemDecoration(dividerItemDecoration);
+
+        // set reviews adapter
+        LinearLayoutManager reviewsLayoutManager =
+                new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
+
+        reviewsList.setLayoutManager(reviewsLayoutManager);
+        ReviewAdapter reviewAdapter;
+
+        // add reviews to lis adapter - max number of reviews = 5
+        if (movie.getReviews().size() <= 20)
+            reviewAdapter = new ReviewAdapter(this, movie.getReviews(), this);
+        else
+            reviewAdapter = new ReviewAdapter(this, movie.getReviews().subList(0, 20), this);
+        reviewsList.setAdapter(reviewAdapter);
+
+        reviewsList.addItemDecoration(dividerItemDecoration);
+
+        adjustConstraintLayoutToView(reviewsList);
         progressBar.setVisibility(View.GONE);
         appBarLayout.setVisibility(View.VISIBLE);
         ratingBar.setVisibility(View.VISIBLE);
+    }
+
+    private void adjustConstraintLayoutToView(final View view) {
+        final ViewTreeObserver viewTreeObserver = view.getViewTreeObserver();
+        viewTreeObserver.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                if (constraintLayout.getMeasuredHeight() > 0) {
+                    int[] location = new int[2];
+                    view.getLocationOnScreen(location);
+                    constraintLayout.getLayoutParams().height = location[1];
+                    constraintLayout.requestLayout();
+                    if (viewTreeObserver.isAlive()) {
+                        viewTreeObserver.removeOnGlobalLayoutListener(this);
+                    } else {
+                        view.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                    }
+                }
+            }
+        });
+    }
+
+    @Override
+    public void onClickTrailerItem(String videoId) {
+        String trailerUrl = String.format(this.youtubeBaseUrl, videoId);
+        Uri uri = Uri.parse(trailerUrl);
+        startActivity(new Intent(Intent.ACTION_VIEW, uri));
+
+    }
+
+    @Override
+    public void onReviewItemClick(Uri uri) {
+
+    }
+
+    public void onFavouriteButtonClicked(View view) {
+        favButton.setImageResource(R.drawable.ic_heart_red);
     }
 }

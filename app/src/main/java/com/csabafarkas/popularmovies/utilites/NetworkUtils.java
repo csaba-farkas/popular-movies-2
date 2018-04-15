@@ -6,6 +6,7 @@ import com.csabafarkas.popularmovies.BuildConfig;
 import com.csabafarkas.popularmovies.models.Movie;
 import com.csabafarkas.popularmovies.models.MovieCollection;
 import com.csabafarkas.popularmovies.models.RetrofitError;
+import com.csabafarkas.popularmovies.models.ReviewCollection;
 import com.csabafarkas.popularmovies.models.TrailerCollection;
 import com.google.gson.Gson;
 
@@ -30,15 +31,60 @@ public final class NetworkUtils {
         return RetrofitClient.getClient(BASE_URL).create(MovieDbService.class);
     }
 
-    public static void getMovie(String apiKey, String movieId, final PopularMoviesNetworkCallback callback) {
-        MovieDbService movieDbService = getMovieDbService();
+    public static void getMovie(final String apiKey, final String movieId, final PopularMoviesNetworkCallback callback) {
+        final MovieDbService movieDbService = getMovieDbService();
 
         movieDbService.getMovie(movieId, apiKey)
                 .enqueue(new Callback<Movie>() {
                     @Override
                     public void onResponse(@NonNull Call<Movie> call, @NonNull Response<Movie> response) {
                         if (response.isSuccessful()) {
-                            callback.onSuccess(response.body());
+                            // callback.onSuccess(response.body());
+                            final Movie movie = response.body();
+                            movieDbService.getTrailers(movieId, apiKey)
+                                    .enqueue(new Callback<TrailerCollection>() {
+                                        @Override
+                                        public void onResponse(Call<TrailerCollection> call, final Response<TrailerCollection> response) {
+                                            if (response.isSuccessful()) {
+                                                movie.setTrailers(response.body().getResults());
+
+                                                movieDbService.getReviews(movieId, apiKey)
+                                                        .enqueue(new Callback<ReviewCollection>() {
+
+                                                            @Override
+                                                            public void onResponse(Call<ReviewCollection> call, final Response<ReviewCollection> response) {
+                                                                if (response.isSuccessful()) {
+                                                                    movie.setReviews(response.body().getResults());
+                                                                    callback.onSuccess(movie);
+                                                                }
+                                                            }
+
+                                                            @Override
+                                                            public void onFailure(Call<ReviewCollection> call, Throwable t) {
+                                                                Gson gson = new Gson();
+                                                                if (response.errorBody() == null) {
+                                                                    callback.onFailure(new RetrofitError());
+                                                                }
+                                                                RetrofitError error = gson.fromJson(response.errorBody().charStream(), RetrofitError.class);
+                                                                callback.onFailure(error);
+
+                                                            }
+                                                        });
+                                            } else {
+                                                Gson gson = new Gson();
+                                                if (response.errorBody() == null) {
+                                                    callback.onFailure(new RetrofitError());
+                                                }
+                                                RetrofitError error = gson.fromJson(response.errorBody().charStream(), RetrofitError.class);
+                                                callback.onFailure(error);
+                                            }
+                                        }
+
+                                        @Override
+                                        public void onFailure(Call<TrailerCollection> call, Throwable t) {
+                                            callback.onError(t);
+                                        }
+                                    });
                         } else {
                             Gson gson = new Gson();
                             if (response.errorBody() == null) {

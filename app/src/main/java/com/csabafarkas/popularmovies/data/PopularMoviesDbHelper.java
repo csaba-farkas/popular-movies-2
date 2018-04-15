@@ -15,13 +15,13 @@ public class PopularMoviesDbHelper extends SQLiteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase db) {
         final String SQL_CREATE_FAVOURITE_MOVIES_TABLE = "CREATE TABLE " +
-                PopularMoviesDbContract.FavouriteMovieEntry.TABLE_NAME + "( " +
-                PopularMoviesDbContract.FavouriteMovieEntry._ID + " INTEGER PRIMARY KEY, " +
-                PopularMoviesDbContract.FavouriteMovieEntry.MOVIE_TITLE + " TEXT NOT NULL, " +
-                PopularMoviesDbContract.FavouriteMovieEntry.POSTER_URL + " TEXT NOT NULL, " +
-                PopularMoviesDbContract.FavouriteMovieEntry.MOVIE_RATING + " REAL NOT NULL, " +
-                PopularMoviesDbContract.FavouriteMovieEntry.RELEASE_DATE + " TEXT NOT NULL, " +
-                PopularMoviesDbContract.FavouriteMovieEntry.MOVIE_PLOT + " TEXT NOT NULL" +
+                PopularMoviesDbContract.MovieEntry.TABLE_NAME + "( " +
+                PopularMoviesDbContract.MovieEntry._ID + " INTEGER PRIMARY KEY, " +
+                PopularMoviesDbContract.MovieEntry.MOVIE_TITLE + " TEXT NOT NULL, " +
+                PopularMoviesDbContract.MovieEntry.POSTER_URL + " TEXT NOT NULL, " +
+                PopularMoviesDbContract.MovieEntry.MOVIE_RATING + " REAL NOT NULL, " +
+                PopularMoviesDbContract.MovieEntry.RELEASE_DATE + " TEXT NOT NULL, " +
+                PopularMoviesDbContract.MovieEntry.MOVIE_PLOT + " TEXT NOT NULL" +
                 ");";
 
         db.execSQL(SQL_CREATE_FAVOURITE_MOVIES_TABLE);
@@ -29,7 +29,7 @@ public class PopularMoviesDbHelper extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        db.execSQL("DROP TABLE IF EXISTS " + PopularMoviesDbContract.FavouriteMovieEntry.TABLE_NAME);
+        db.execSQL("DROP TABLE IF EXISTS " + PopularMoviesDbContract.MovieEntry.TABLE_NAME);
         onCreate(db);
     }
 }

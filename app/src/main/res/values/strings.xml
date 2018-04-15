@@ -31,5 +31,8 @@
     <string name="plot_tab_title">Plot</string>
     <string name="trailers_tab_title">Trailers</string>
     <string name="reviews_tab_title">Reviews</string>
+    <string name="plot_title">Plot</string>
+    <string name="trailers_title">Trailers</string>
+    <string name="reviews_title">Reviews</string>
     <!-- End of miscellaneous -->
 </resources>
