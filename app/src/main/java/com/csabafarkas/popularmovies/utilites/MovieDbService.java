@@ -2,6 +2,7 @@ package com.csabafarkas.popularmovies.utilites;
 
 import com.csabafarkas.popularmovies.models.Movie;
 import com.csabafarkas.popularmovies.models.MovieCollection;
+import com.csabafarkas.popularmovies.models.ReviewCollection;
 import com.csabafarkas.popularmovies.models.TrailerCollection;
 
 import retrofit2.Call;
@@ -25,5 +26,8 @@ public interface MovieDbService {
     Call<Movie> getMovie(@Path(value = "id", encoded = true) String movieId, @Query("api_key") String apiKey);
 
     @GET("/3/movie/{id}/videos")
-    Call<TrailerCollection>getTrailers(@Path(value = "id", encoded = true) String movieId, @Query("api_key") String apiKey);
+    Call<TrailerCollection> getTrailers(@Path(value = "id", encoded = true) String movieId, @Query("api_key") String apiKey);
+
+    @GET("/3/movie/{id}/reviews")
+    Call<ReviewCollection> getReviews(@Path(value = "id", encoded = true) String movieId, @Query("api_key") String apiKey);
 }
