@@ -1,6 +1,7 @@
 package com.csabafarkas.popularmovies;
 
 import android.content.Intent;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -14,7 +15,9 @@ import android.widget.GridView;
 import android.widget.Toast;
 
 import com.csabafarkas.popularmovies.adapters.MovieAdapter;
+import com.csabafarkas.popularmovies.data.PopularMoviesDbContract;
 import com.csabafarkas.popularmovies.data.PopularMoviesDbHelper;
+import com.csabafarkas.popularmovies.data.TestUtil;
 import com.csabafarkas.popularmovies.models.Movie;
 import com.csabafarkas.popularmovies.models.MovieCollection;
 import com.csabafarkas.popularmovies.models.PopularMoviesModel;
@@ -26,6 +29,7 @@ import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import timber.log.Timber;
 
 public class MainActivity extends AppCompatActivity implements PopularMoviesNetworkCallback {
 
@@ -43,8 +47,18 @@ public class MainActivity extends AppCompatActivity implements PopularMoviesNetw
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
+        if (BuildConfig.DEBUG) {
+            Timber.plant(new Timber.DebugTree());
+        }
         PopularMoviesDbHelper dbHelper = new PopularMoviesDbHelper(this);
         database = dbHelper.getWritableDatabase();
+        TestUtil.insertFakeData(database);
+        Cursor cursor = getAllFavouriteMovies();
+
+        while (cursor.moveToNext()) {
+            Timber.d(cursor.getInt(0) + "");
+        }
+
     }
 
     @Override
@@ -181,5 +195,17 @@ public class MainActivity extends AppCompatActivity implements PopularMoviesNetw
             default:
                 throw new UnsupportedOperationException("Unknown selection!");
         }
+    }
+
+    private Cursor getAllFavouriteMovies() {
+        return database.query(
+                PopularMoviesDbContract.MovieEntry.TABLE_NAME,
+                null,
+                null,
+                null,
+                null,
+                null,
+                PopularMoviesDbContract.MovieEntry.TIME_ADDED
+        );
     }
 }

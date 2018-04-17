@@ -34,5 +34,6 @@
     <string name="plot_title">Plot</string>
     <string name="trailers_title">Trailers</string>
     <string name="reviews_title">Reviews</string>
+    <string name="favourite_button_description">Tap to add to favourites</string>
     <!-- End of miscellaneous -->
 </resources>

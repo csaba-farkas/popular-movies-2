@@ -11,6 +11,7 @@ public class PopularMoviesDbContract {
         public static final String MOVIE_RATING = "movie_rating";
         public static final String RELEASE_DATE = "release_date";
         public static final String MOVIE_PLOT = "movie_plot";
+        public static final String TIME_ADDED = "time_added";
     }
 
     public static final class TrailerEntry implements BaseColumns {
