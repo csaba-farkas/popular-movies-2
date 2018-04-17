@@ -1,6 +1,7 @@
 package com.csabafarkas.popularmovies;
 
 import android.content.Intent;
+import android.database.sqlite.SQLiteDatabase;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.Menu;
@@ -13,6 +14,7 @@ import android.widget.GridView;
 import android.widget.Toast;
 
 import com.csabafarkas.popularmovies.adapters.MovieAdapter;
+import com.csabafarkas.popularmovies.data.PopularMoviesDbHelper;
 import com.csabafarkas.popularmovies.models.Movie;
 import com.csabafarkas.popularmovies.models.MovieCollection;
 import com.csabafarkas.popularmovies.models.PopularMoviesModel;
@@ -34,12 +36,15 @@ public class MainActivity extends AppCompatActivity implements PopularMoviesNetw
     private int currentPosition;
     private List<Movie> movies;
     private boolean loading;
+    private SQLiteDatabase database;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
+        PopularMoviesDbHelper dbHelper = new PopularMoviesDbHelper(this);
+        database = dbHelper.getWritableDatabase();
     }
 
     @Override

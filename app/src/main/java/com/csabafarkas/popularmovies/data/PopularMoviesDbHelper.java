@@ -25,10 +25,41 @@ public class PopularMoviesDbHelper extends SQLiteOpenHelper {
                 ");";
 
         db.execSQL(SQL_CREATE_FAVOURITE_MOVIES_TABLE);
+
+        // FOREIGN KEY(customer_id) REFERENCES customers(id)
+        final String SQL_CREATE_TRAILERS_TABLE = "CREATE TABLE " +
+                PopularMoviesDbContract.TrailerEntry.TABLE_NAME + "(" +
+                PopularMoviesDbContract.TrailerEntry._ID + " INTEGER PRIMARY KEY, " +
+                PopularMoviesDbContract.TrailerEntry.KEY + " TEXT NON NULL, " +
+                PopularMoviesDbContract.TrailerEntry.SITE + " TEXT NON NULL, " +
+                PopularMoviesDbContract.TrailerEntry.NAME + " TEXT NON NULL, " +
+                PopularMoviesDbContract.TrailerEntry.SIZE + " TEXT NON NULL, " +
+                PopularMoviesDbContract.TrailerEntry.TYPE + " TEXT NON NULL, " +
+                PopularMoviesDbContract.TrailerEntry.MOVIE_ID + " INTEGER, " +
+                "FOREIGN KEY(" + PopularMoviesDbContract.TrailerEntry.MOVIE_ID + ") REFERENCES " +
+                PopularMoviesDbContract.MovieEntry.TABLE_NAME + "(" + PopularMoviesDbContract.MovieEntry._ID + ")" +
+                ");";
+
+        db.execSQL(SQL_CREATE_TRAILERS_TABLE);
+
+        final String SQL_CREATE_REVIEWS_TABLE = "CREATE TABLE " +
+                PopularMoviesDbContract.ReviewEntry.TABLE_NAME + "(" +
+                PopularMoviesDbContract.ReviewEntry._ID + " INTEGER PRIMARY KEY, " +
+                PopularMoviesDbContract.ReviewEntry.AUTHOR + " TEXT NON NULL, " +
+                PopularMoviesDbContract.ReviewEntry.URL + " TEXT NON NULL, " +
+                PopularMoviesDbContract.ReviewEntry.MOVIE_ID + " INTEGER, " +
+                "FOREIGN KEY(" + PopularMoviesDbContract.ReviewEntry.MOVIE_ID + ") REFERENCES " +
+                PopularMoviesDbContract.MovieEntry.TABLE_NAME + "(" + PopularMoviesDbContract.MovieEntry._ID + ")" +
+                ");";
+
+        db.execSQL(SQL_CREATE_REVIEWS_TABLE);
+
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        db.execSQL("DROP TABLE IF EXISTS " + PopularMoviesDbContract.TrailerEntry.TABLE_NAME);
+        db.execSQL("DROP TABLE IF EXISTS " + PopularMoviesDbContract.ReviewEntry.TABLE_NAME);
         db.execSQL("DROP TABLE IF EXISTS " + PopularMoviesDbContract.MovieEntry.TABLE_NAME);
         onCreate(db);
     }
