@@ -29,6 +29,11 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".MainActivity" />
         </activity>
+        <!-- Exported defines if other applications can access this ContentProvider -->
+        <provider
+            android:authorities="com.csabafarkas.popularmovies"
+            android:name="com.csabafarkas.popularmovies.data.PopularMoviesContentProvider"
+            android:exported="false" />
     </application>
 
 </manifest>

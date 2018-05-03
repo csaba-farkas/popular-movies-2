@@ -7,7 +7,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 public class PopularMoviesDbHelper extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "popular_movies.db";
-    private static final int DATABASE_VERSION = 2;
+    private static final int DATABASE_VERSION = 3;
 
     public PopularMoviesDbHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -27,10 +27,9 @@ public class PopularMoviesDbHelper extends SQLiteOpenHelper {
 
         db.execSQL(SQL_CREATE_FAVOURITE_MOVIES_TABLE);
 
-        // FOREIGN KEY(customer_id) REFERENCES customers(id)
         final String SQL_CREATE_TRAILERS_TABLE = "CREATE TABLE " +
                 PopularMoviesDbContract.TrailerEntry.TABLE_NAME + "(" +
-                PopularMoviesDbContract.TrailerEntry._ID + " INTEGER PRIMARY KEY, " +
+                PopularMoviesDbContract.TrailerEntry._ID + " TEXT PRIMARY KEY, " +
                 PopularMoviesDbContract.TrailerEntry.KEY + " TEXT NON NULL, " +
                 PopularMoviesDbContract.TrailerEntry.SITE + " TEXT NON NULL, " +
                 PopularMoviesDbContract.TrailerEntry.NAME + " TEXT NON NULL, " +
@@ -45,9 +44,10 @@ public class PopularMoviesDbHelper extends SQLiteOpenHelper {
 
         final String SQL_CREATE_REVIEWS_TABLE = "CREATE TABLE " +
                 PopularMoviesDbContract.ReviewEntry.TABLE_NAME + "(" +
-                PopularMoviesDbContract.ReviewEntry._ID + " INTEGER PRIMARY KEY, " +
+                PopularMoviesDbContract.ReviewEntry._ID + " TEXT PRIMARY KEY, " +
                 PopularMoviesDbContract.ReviewEntry.AUTHOR + " TEXT NON NULL, " +
                 PopularMoviesDbContract.ReviewEntry.URL + " TEXT NON NULL, " +
+                PopularMoviesDbContract.ReviewEntry.CONTENT + " TEXT NON NULL, " +
                 PopularMoviesDbContract.ReviewEntry.MOVIE_ID + " INTEGER, " +
                 "FOREIGN KEY(" + PopularMoviesDbContract.ReviewEntry.MOVIE_ID + ") REFERENCES " +
                 PopularMoviesDbContract.MovieEntry.TABLE_NAME + "(" + PopularMoviesDbContract.MovieEntry._ID + ")" +

@@ -218,6 +218,10 @@ public class MovieDetailsActivity extends AppCompatActivity
     }
 
     public void onFavouriteButtonClicked(View view) {
-        favButton.setImageResource(R.drawable.ic_heart_red);
+        // TODO: create a callback method that changes the image resource of the ImageButton after inserting or deleting the movie from the db
+        favButton.setImageResource(R.drawable.ic_heart_red);    // this is just for demonstration purposes
+
+        // try to get movie from database
+        //if ()
     }
 }
