@@ -11,4 +11,10 @@
         android:orderInCategory="101"
         android:title="@string/menu_item_top_rated"
         app:showAsAction="never" />
+
+    <item
+        android:id="@+id/sort_favourite_movies"
+        android:orderInCategory="102"
+        android:title="@string/favourite_movies_selection"
+        app:showAsAction="never" />
 </menu>

@@ -49,7 +49,48 @@ public class PopularMoviesContentProvider extends ContentProvider {
     @Nullable
     @Override
     public Cursor query(@NonNull Uri uri, @Nullable String[] projection, @Nullable String selection, @Nullable String[] selectionArgs, @Nullable String sortOrder) {
-        return null;
+        final SQLiteDatabase db = dbHelper.getReadableDatabase();
+
+        int match = uriMatcher.match(uri);
+        Cursor ret;
+        switch (match) {
+            case MOVIES:
+                ret = db.query(
+                        PopularMoviesDbContract.MovieEntry.TABLE_NAME,
+                        projection,
+                        selection,
+                        selectionArgs,
+                        null,
+                        null,
+                        sortOrder
+                );
+                break;
+            case TRAILERS:
+                ret = db.query(
+                        PopularMoviesDbContract.TrailerEntry.TABLE_NAME,
+                        projection,
+                        selection,
+                        selectionArgs,
+                        null,
+                        null,
+                        sortOrder
+                );
+                break;
+            case REVIEWS:
+                ret = db.query(
+                        PopularMoviesDbContract.ReviewEntry.TABLE_NAME,
+                        projection,
+                        selection,
+                        selectionArgs,
+                        null,
+                        null,
+                        sortOrder
+                );
+                break;
+            default:
+                throw new UnsupportedOperationException("Unknown uri " + uri);
+        }
+        return ret;
     }
 
     @Nullable
@@ -74,7 +115,7 @@ public class PopularMoviesContentProvider extends ContentProvider {
                 } else {
                     throw new SQLException("Failed to insert row into " + uri);
                 }
-                break
+                break;
             case REVIEWS:
                 id = db.insert(PopularMoviesDbContract.ReviewEntry.TABLE_NAME, null, values);
                 if (id > 0) {

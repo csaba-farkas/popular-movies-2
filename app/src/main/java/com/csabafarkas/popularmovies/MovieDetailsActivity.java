@@ -1,5 +1,6 @@
 package com.csabafarkas.popularmovies;
 
+import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
@@ -20,12 +21,16 @@ import android.widget.ProgressBar;
 import android.widget.RatingBar;
 import android.widget.TextView;
 import android.support.v7.widget.Toolbar;
+import android.widget.Toast;
 
 import com.csabafarkas.popularmovies.adapters.ReviewAdapter;
 import com.csabafarkas.popularmovies.adapters.TrailerAdapter;
+import com.csabafarkas.popularmovies.data.PopularMoviesDbContract;
 import com.csabafarkas.popularmovies.models.Movie;
 import com.csabafarkas.popularmovies.models.PopularMoviesModel;
 import com.csabafarkas.popularmovies.models.RetrofitError;
+import com.csabafarkas.popularmovies.models.Review;
+import com.csabafarkas.popularmovies.models.Trailer;
 import com.csabafarkas.popularmovies.utilites.NetworkUtils;
 import com.csabafarkas.popularmovies.utilites.PopularMoviesNetworkCallback;
 import com.squareup.picasso.Picasso;
@@ -69,6 +74,7 @@ public class MovieDetailsActivity extends AppCompatActivity
     Drawable redHeartDrawable;
     @BindDrawable(R.drawable.ic_heart_white)
     Drawable whiteHeartDrawable;
+    private Movie movie;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -90,8 +96,8 @@ public class MovieDetailsActivity extends AppCompatActivity
     @Override
     public void onSuccess(PopularMoviesModel movie) {
         if (!(movie instanceof Movie)) return;
-        Movie movieParam = (Movie) movie;
-        updateUI(movieParam);
+        this.movie = (Movie) movie;
+        updateUI();
     }
 
     @Override
@@ -124,7 +130,7 @@ public class MovieDetailsActivity extends AppCompatActivity
         });
     }
 
-    private void updateUI(Movie movie) {
+    private void updateUI() {
         String baseUrl = getResources().getString(R.string.poster_base_url_185);
         Picasso.with(this)
                 .load(String.format(baseUrl, movie.getPosterPath()))
@@ -144,7 +150,7 @@ public class MovieDetailsActivity extends AppCompatActivity
 
         // set trailers adapter
         LinearLayoutManager trailersLayoutManger =
-                new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
+                new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);
 
         trailersList.setLayoutManager(trailersLayoutManger);
         TrailerAdapter trailerAdapter;
@@ -158,13 +164,13 @@ public class MovieDetailsActivity extends AppCompatActivity
 
         DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(
                 this,
-                LinearLayoutManager.VERTICAL
+                LinearLayoutManager.HORIZONTAL
         );
         trailersList.addItemDecoration(dividerItemDecoration);
 
         // set reviews adapter
         LinearLayoutManager reviewsLayoutManager =
-                new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
+                new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);
 
         reviewsList.setLayoutManager(reviewsLayoutManager);
         ReviewAdapter reviewAdapter;
@@ -214,14 +220,60 @@ public class MovieDetailsActivity extends AppCompatActivity
 
     @Override
     public void onReviewItemClick(Uri uri) {
-
+        startActivity(new Intent(Intent.ACTION_VIEW, uri));
     }
 
     public void onFavouriteButtonClicked(View view) {
         // TODO: create a callback method that changes the image resource of the ImageButton after inserting or deleting the movie from the db
         favButton.setImageResource(R.drawable.ic_heart_red);    // this is just for demonstration purposes
 
-        // try to get movie from database
-        //if ()
+        // insert movie details
+        ContentValues cv = new ContentValues();
+
+        cv.put(PopularMoviesDbContract.MovieEntry._ID, movie.getId());
+        cv.put(PopularMoviesDbContract.MovieEntry.MOVIE_TITLE, movie.getTitle());
+        cv.put(PopularMoviesDbContract.MovieEntry.POSTER_URL, movie.getPosterPath());
+        cv.put(PopularMoviesDbContract.MovieEntry.MOVIE_RATING, movie.getVoteAverage());
+        cv.put(PopularMoviesDbContract.MovieEntry.RELEASE_DATE, movie.getReleaseDate());
+        cv.put(PopularMoviesDbContract.MovieEntry.MOVIE_PLOT, movie.getOverview());
+
+        Uri uri = getContentResolver().insert(PopularMoviesDbContract.MovieEntry.MOVIES_CONTENT_URI, cv);
+
+        if (uri != null) {
+            Toast.makeText(getBaseContext(), uri.toString(), Toast.LENGTH_LONG).show();
+        }
+
+        //insert reviews
+        if (movie.getReviews().size() > 0) {
+            cv.clear();
+
+            for (Review review : movie.getReviews()) {
+                cv.put(PopularMoviesDbContract.ReviewEntry._ID, review.getId());
+                cv.put(PopularMoviesDbContract.ReviewEntry.AUTHOR, review.getAuthor());
+                cv.put(PopularMoviesDbContract.ReviewEntry.CONTENT, review.getContent());
+                cv.put(PopularMoviesDbContract.ReviewEntry.URL, review.getUrl());
+                cv.put(PopularMoviesDbContract.ReviewEntry.MOVIE_ID, movie.getId());
+
+                uri = getContentResolver().insert(PopularMoviesDbContract.ReviewEntry.REVIEWS_CONTENT_URI, cv);
+            }
+        }
+
+        // insert trailers
+        if (movie.getTrailers().size() > 0) {
+            cv.clear();
+
+            for (Trailer trailer : movie.getTrailers()) {
+                cv.put(PopularMoviesDbContract.TrailerEntry._ID, trailer.getId());
+                cv.put(PopularMoviesDbContract.TrailerEntry.KEY, trailer.getKey());
+                cv.put(PopularMoviesDbContract.TrailerEntry.SITE, trailer.getSite());
+                cv.put(PopularMoviesDbContract.TrailerEntry.NAME, trailer.getName());
+                cv.put(PopularMoviesDbContract.TrailerEntry.SIZE, trailer.getSize());
+                cv.put(PopularMoviesDbContract.TrailerEntry.TYPE, trailer.getType());
+                cv.put(PopularMoviesDbContract.TrailerEntry.MOVIE_ID, movie.getId());
+
+                uri = getContentResolver().insert(PopularMoviesDbContract.TrailerEntry.TRAILERS_CONTENT_URI, cv);
+            }
+        }
+
     }
 }

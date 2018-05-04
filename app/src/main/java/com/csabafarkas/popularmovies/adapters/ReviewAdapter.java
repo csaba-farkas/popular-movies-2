@@ -45,7 +45,12 @@ public class ReviewAdapter extends RecyclerView.Adapter<ReviewAdapter.ReviewAdap
 
     @Override
     public void onBindViewHolder(@NonNull ReviewAdapterViewHolder holder, int position) {
-        String review = "\"" + reviews.get(position).getContent() + "\"";
+        String review = "\"" + reviews.get(position).getContent();
+        if (review.length() > 100) {
+            review = review.substring(0, 99);
+            review += "...";
+        }
+        review += "\"";
         holder.reviewTextView.setText(review);
         String author = String.format("by %s", reviews.get(position).getAuthor());
         holder.authorTextView.setText(author);
@@ -71,7 +76,7 @@ public class ReviewAdapter extends RecyclerView.Adapter<ReviewAdapter.ReviewAdap
 
         @Override
         public void onClick(View v) {
-            // TODO: ask Carlos if we need to do anything here
+            clickHandler.onReviewItemClick(Uri.parse(reviews.get(getAdapterPosition()).getUrl()));
         }
     }
 }

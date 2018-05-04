@@ -1,8 +1,12 @@
 package com.csabafarkas.popularmovies;
 
+import android.annotation.SuppressLint;
+import android.support.annotation.NonNull;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.AsyncTaskLoader;
+import android.support.v4.content.Loader;
 import android.content.Intent;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.Menu;
@@ -16,13 +20,12 @@ import android.widget.Toast;
 
 import com.csabafarkas.popularmovies.adapters.MovieAdapter;
 import com.csabafarkas.popularmovies.data.PopularMoviesDbContract;
-import com.csabafarkas.popularmovies.data.PopularMoviesDbHelper;
-import com.csabafarkas.popularmovies.data.TestUtil;
 import com.csabafarkas.popularmovies.models.Movie;
 import com.csabafarkas.popularmovies.models.MovieCollection;
 import com.csabafarkas.popularmovies.models.PopularMoviesModel;
 import com.csabafarkas.popularmovies.models.RetrofitError;
 import com.csabafarkas.popularmovies.utilites.NetworkUtils;
+import com.csabafarkas.popularmovies.utilites.PopularMoviesHelpers;
 import com.csabafarkas.popularmovies.utilites.PopularMoviesNetworkCallback;
 
 import java.util.List;
@@ -31,7 +34,10 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import timber.log.Timber;
 
-public class MainActivity extends AppCompatActivity implements PopularMoviesNetworkCallback {
+public class MainActivity extends AppCompatActivity
+        implements PopularMoviesNetworkCallback, LoaderManager.LoaderCallbacks<Cursor> {
+
+    private static final int MOVIE_LOADER_ID = 1;
 
     @BindView(R.id.activity_main_root_gv)
     GridView rootView;
@@ -40,7 +46,6 @@ public class MainActivity extends AppCompatActivity implements PopularMoviesNetw
     private int currentPosition;
     private List<Movie> movies;
     private boolean loading;
-    private SQLiteDatabase database;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,15 +55,6 @@ public class MainActivity extends AppCompatActivity implements PopularMoviesNetw
         if (BuildConfig.DEBUG) {
             Timber.plant(new Timber.DebugTree());
         }
-        PopularMoviesDbHelper dbHelper = new PopularMoviesDbHelper(this);
-        database = dbHelper.getWritableDatabase();
-        TestUtil.insertFakeData(database);
-        Cursor cursor = getAllFavouriteMovies();
-
-        while (cursor.moveToNext()) {
-            Timber.d(cursor.getInt(0) + "");
-        }
-
     }
 
     @Override
@@ -176,6 +172,11 @@ public class MainActivity extends AppCompatActivity implements PopularMoviesNetw
                 currentSelection = R.id.sort_most_popular;
                 loadMovies(currentSelection);
                 break;
+            case R.id.sort_favourite_movies:
+                if (currentSelection == R.id.sort_favourite_movies) break;
+                currentSelection = R.id.sort_favourite_movies;
+                loadMovies(currentSelection);
+                break;
             default:
                 throw new UnsupportedOperationException("Unknown selection");
         }
@@ -187,25 +188,65 @@ public class MainActivity extends AppCompatActivity implements PopularMoviesNetw
         pageNumber++;
         switch (currentSelection) {
             case R.id.sort_most_popular:
+                getSupportLoaderManager().destroyLoader(MOVIE_LOADER_ID);
                 NetworkUtils.getMostPopularMovies(BuildConfig.MovieDbApiKey, pageNumber, this);
                 break;
             case R.id.sort_top_rated:
+                getSupportLoaderManager().destroyLoader(MOVIE_LOADER_ID);
                 NetworkUtils.getTopRatedMovies(BuildConfig.MovieDbApiKey, pageNumber, this);
+                break;
+            case R.id.sort_favourite_movies:
+                getSupportLoaderManager().initLoader(MOVIE_LOADER_ID, null, this);
                 break;
             default:
                 throw new UnsupportedOperationException("Unknown selection!");
         }
     }
 
-    private Cursor getAllFavouriteMovies() {
-        return database.query(
-                PopularMoviesDbContract.MovieEntry.TABLE_NAME,
-                null,
-                null,
-                null,
-                null,
-                null,
-                PopularMoviesDbContract.MovieEntry.TIME_ADDED
-        );
+    @NonNull
+    @SuppressLint("StaticFieldLeak")
+    @Override
+    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+        return new AsyncTaskLoader<Cursor>(this) {
+
+            Cursor cursor = null;
+
+            @Override
+            protected void onStartLoading() {
+                if (cursor == null) {
+                    forceLoad();
+                } else {
+                    deliverResult(cursor);
+                }
+            }
+
+            @Override
+            public Cursor loadInBackground() {
+                try {
+                    return getContentResolver().query(
+                            PopularMoviesDbContract.MovieEntry.MOVIES_CONTENT_URI,
+                            null,
+                            null,
+                            null,
+                            PopularMoviesDbContract.MovieEntry.TIME_ADDED);
+                } catch (Exception ex) {
+                    Toast.makeText(MainActivity.this, "Failed to load favourite movies.", Toast.LENGTH_SHORT).show();
+                    return null;
+                }
+            }
+        };
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+        movies = PopularMoviesHelpers.convertMovieCursorToList(data);
+
+        MovieAdapter movieAdapter = new MovieAdapter(this, 0, movies);
+        rootView.setAdapter(movieAdapter);
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Cursor> loader) {
+        movies.clear();
     }
 }

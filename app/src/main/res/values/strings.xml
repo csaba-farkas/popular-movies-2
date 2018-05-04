@@ -35,5 +35,6 @@
     <string name="trailers_title">Trailers</string>
     <string name="reviews_title">Reviews</string>
     <string name="favourite_button_description">Tap to add to favourites</string>
+    <string name="favourite_movies_selection">Favourites</string>
     <!-- End of miscellaneous -->
 </resources>
