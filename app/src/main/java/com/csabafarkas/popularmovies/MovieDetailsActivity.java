@@ -1,12 +1,19 @@
 package com.csabafarkas.popularmovies;
 
+import android.annotation.SuppressLint;
 import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.database.Cursor;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.AppBarLayout;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.CursorLoader;
+import android.support.v4.content.Loader;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -32,8 +39,11 @@ import com.csabafarkas.popularmovies.models.RetrofitError;
 import com.csabafarkas.popularmovies.models.Review;
 import com.csabafarkas.popularmovies.models.Trailer;
 import com.csabafarkas.popularmovies.utilites.NetworkUtils;
+import com.csabafarkas.popularmovies.utilites.PopularMoviesHelpers;
 import com.csabafarkas.popularmovies.utilites.PopularMoviesNetworkCallback;
 import com.squareup.picasso.Picasso;
+
+import java.util.ArrayList;
 
 import butterknife.BindDrawable;
 import butterknife.BindString;
@@ -42,7 +52,11 @@ import butterknife.ButterKnife;
 
 public class MovieDetailsActivity extends AppCompatActivity
             implements PopularMoviesNetworkCallback, TrailerAdapter.TrailerAdapterOnClickListener,
-                    ReviewAdapter.ReviewItemOnClickListener{
+                    ReviewAdapter.ReviewItemOnClickListener, LoaderManager.LoaderCallbacks<Cursor> {
+
+    private static final int TRAILERS_LOADER_ID = 1;
+    private static final int REVIEWS_LOADER_ID = 2;
+    private static final int MOVIE_LOADER_ID = 3;
 
     @BindView(R.id.movie_details_poster_iv)
     ImageView posterImageView;
@@ -70,10 +84,17 @@ public class MovieDetailsActivity extends AppCompatActivity
     ImageButton favButton;
     @BindString(R.string.youtube_trailer_url)
     String youtubeBaseUrl;
+    @BindString(R.string.movie_id_key)
+    String movieIdKey;
+    @BindString(R.string.movie_key)
+    String movieKey;
+    @BindString(R.string.favourite_tag)
+    String favTag;
     @BindDrawable(R.drawable.ic_heart_red)
     Drawable redHeartDrawable;
     @BindDrawable(R.drawable.ic_heart_white)
     Drawable whiteHeartDrawable;
+    private String movieId;
     private Movie movie;
 
     @Override
@@ -81,16 +102,31 @@ public class MovieDetailsActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_movie_details);
         ButterKnife.bind(this);
-        String movieId;
 
-        if (getIntent() != null) {
-            // get the movie id from the intent
-            if (getIntent().hasExtra(getResources().getString(R.string.movie_id_key))) {
-                movieId = getIntent().getStringExtra(getResources().getString(R.string.movie_id_key));
-                if (movieId != null)
-                    NetworkUtils.getMovie(BuildConfig.MovieDbApiKey, movieId, this);
+        if (getIntent() == null) return;
+
+        // get the movie id from the intent
+        if (getIntent().hasExtra(movieIdKey)) {
+            movieId = getIntent().getStringExtra(movieIdKey);
+            if (movieId == null) {
+                Toast.makeText(getBaseContext(), getResources().getString(R.string.unexpected_error), Toast.LENGTH_SHORT).show();
+                finish();
             }
+
+            NetworkUtils.getMovie(BuildConfig.MovieDbApiKey, movieId, this);
+            favButton.setTag("");
+        } else if (getIntent().hasExtra(movieKey)) {
+            movie = getIntent().getParcelableExtra(movieKey);
+            Bundle args = new Bundle();
+            args.putLong(movieIdKey, movie.getId());
+            getSupportLoaderManager().initLoader(TRAILERS_LOADER_ID, args, this);
+            favButton.setImageResource(R.drawable.ic_heart_red);
+            favButton.setTag(favTag);
         }
+
+        Bundle args = new Bundle();
+        args.putString(movieIdKey, movieId);
+        getSupportLoaderManager().initLoader(MOVIE_LOADER_ID, args, this);
     }
 
     @Override
@@ -156,6 +192,8 @@ public class MovieDetailsActivity extends AppCompatActivity
         TrailerAdapter trailerAdapter;
 
         // add trailers to list adapter - max number of trailers = 5
+        if (movie.getTrailers() == null)
+            movie.setTrailers(new ArrayList<Trailer>());
         if (movie.getTrailers().size() <= 5)
             trailerAdapter = new TrailerAdapter(this, movie.getTrailers(), this);
         else
@@ -176,6 +214,9 @@ public class MovieDetailsActivity extends AppCompatActivity
         ReviewAdapter reviewAdapter;
 
         // add reviews to lis adapter - max number of reviews = 5
+        if (movie.getReviews() == null)
+            movie.setReviews(new ArrayList<Review>());
+
         if (movie.getReviews().size() <= 20)
             reviewAdapter = new ReviewAdapter(this, movie.getReviews(), this);
         else
@@ -224,10 +265,20 @@ public class MovieDetailsActivity extends AppCompatActivity
     }
 
     public void onFavouriteButtonClicked(View view) {
-        // TODO: create a callback method that changes the image resource of the ImageButton after inserting or deleting the movie from the db
-        favButton.setImageResource(R.drawable.ic_heart_red);    // this is just for demonstration purposes
 
-        // insert movie details
+        if (favButton.getTag() == null) {
+            insertMovieIntoDatabase();
+            return;
+        }
+
+        if (!favButton.getTag().equals(favTag)) {
+            insertMovieIntoDatabase();
+        } else {
+            deleteMovieFromDatabase();
+        }
+    }
+
+    private void insertMovieIntoDatabase() {
         ContentValues cv = new ContentValues();
 
         cv.put(PopularMoviesDbContract.MovieEntry._ID, movie.getId());
@@ -240,7 +291,7 @@ public class MovieDetailsActivity extends AppCompatActivity
         Uri uri = getContentResolver().insert(PopularMoviesDbContract.MovieEntry.MOVIES_CONTENT_URI, cv);
 
         if (uri != null) {
-            Toast.makeText(getBaseContext(), uri.toString(), Toast.LENGTH_LONG).show();
+            Toast.makeText(getBaseContext(), String.format(getResources().getString(R.string.success_on_insert), movie.getTitle()), Toast.LENGTH_LONG).show();
         }
 
         //insert reviews
@@ -254,7 +305,7 @@ public class MovieDetailsActivity extends AppCompatActivity
                 cv.put(PopularMoviesDbContract.ReviewEntry.URL, review.getUrl());
                 cv.put(PopularMoviesDbContract.ReviewEntry.MOVIE_ID, movie.getId());
 
-                uri = getContentResolver().insert(PopularMoviesDbContract.ReviewEntry.REVIEWS_CONTENT_URI, cv);
+                getContentResolver().insert(PopularMoviesDbContract.ReviewEntry.REVIEWS_CONTENT_URI, cv);
             }
         }
 
@@ -271,9 +322,119 @@ public class MovieDetailsActivity extends AppCompatActivity
                 cv.put(PopularMoviesDbContract.TrailerEntry.TYPE, trailer.getType());
                 cv.put(PopularMoviesDbContract.TrailerEntry.MOVIE_ID, movie.getId());
 
-                uri = getContentResolver().insert(PopularMoviesDbContract.TrailerEntry.TRAILERS_CONTENT_URI, cv);
+                getContentResolver().insert(PopularMoviesDbContract.TrailerEntry.TRAILERS_CONTENT_URI, cv);
             }
         }
 
+        favButton.setImageResource(R.drawable.ic_heart_red);
+        favButton.setTag(favTag);
+    }
+
+    private void deleteMovieFromDatabase() {
+        String id = String.valueOf(movie.getId());
+        String movieTitle = movie.getTitle();
+        Uri uri = PopularMoviesDbContract.MovieEntry.MOVIES_CONTENT_URI
+                .buildUpon()
+                .appendPath(id)
+                .build();
+
+        int deletedRows = getContentResolver().delete(uri, "_id = ?", new String[] { id });
+
+        if (deletedRows > 0) {
+            Toast.makeText(this, String.format(getResources().getString(R.string.success_on_delete), movieTitle), Toast.LENGTH_SHORT).show();
+        }
+
+        favButton.setImageResource(R.drawable.ic_heart_white);
+        favButton.setTag("");
+    }
+    @SuppressLint("StaticFieldLeak")
+    @NonNull
+    @Override
+    public Loader<Cursor> onCreateLoader(int id, @Nullable final Bundle args) {
+        final int loaderId = id;
+        return new CursorLoader(this) {
+
+            Cursor cursor = null;
+
+            @Override
+            protected void onStartLoading() {
+                if (cursor == null) {
+                    forceLoad();
+                } else {
+                    deliverResult(cursor);
+                }
+            }
+
+            @Nullable
+            @Override
+            public Cursor loadInBackground() {
+                switch (loaderId) {
+                    case TRAILERS_LOADER_ID:
+                        return getContentResolver().query(
+                                PopularMoviesDbContract.TrailerEntry.TRAILERS_CONTENT_URI,
+                                null,
+                                PopularMoviesDbContract.TrailerEntry.MOVIE_ID + " = ?",
+                                new String[] { args.getLong(movieIdKey) + ""},
+                                PopularMoviesDbContract.TrailerEntry.NAME
+                        );
+                    case REVIEWS_LOADER_ID:
+                        return getContentResolver().query(
+                                PopularMoviesDbContract.ReviewEntry.REVIEWS_CONTENT_URI,
+                                null,
+                                PopularMoviesDbContract.ReviewEntry.MOVIE_ID + " = ?",
+                                new String[] { args.getLong(movieIdKey) + "" },
+                                null
+                        );
+                    case MOVIE_LOADER_ID:
+                        String movieId;
+                        if ( (movieId = args.getString(movieIdKey)) == null) return null;
+                        Uri movieUri = PopularMoviesDbContract.MovieEntry.MOVIES_CONTENT_URI
+                                .buildUpon()
+                                .appendPath(movieId)
+                                .build();
+                        return getContentResolver().query(movieUri,
+                                null,
+                                null,
+                                null,
+                                null);
+                    default:
+                        throw new UnsupportedOperationException("Failed to find loader with loader id: " + loaderId);
+                }
+            }
+        };
+    }
+
+    @Override
+    public void onLoadFinished(@NonNull Loader<Cursor> loader, Cursor data) {
+        int loaderId = loader.getId();
+        switch (loaderId) {
+            case TRAILERS_LOADER_ID:
+                movie.setTrailers(PopularMoviesHelpers.convertTrailersCursorToList(data));
+                Bundle args = new Bundle();
+                args.putLong(movieIdKey, movie.getId());
+                getSupportLoaderManager().initLoader(REVIEWS_LOADER_ID, args, this);
+                break;
+            case REVIEWS_LOADER_ID:
+                movie.setReviews(PopularMoviesHelpers.convertReviewsCursorToList(data));
+                updateUI();
+                break;
+            case MOVIE_LOADER_ID:
+                if (data == null) break;
+                if (PopularMoviesHelpers.convertMovieCursorToList(data).size() > 0) {
+                    favButton.setImageResource(R.drawable.ic_heart_red);
+                    favButton.setTag(favTag);
+                } else {
+                    favButton.setImageResource(R.drawable.ic_heart_white);
+                    favButton.setTag("");
+                }
+                break;
+            default:
+                throw new UnsupportedOperationException("Failed to find loader with id " + loaderId);
+        }
+    }
+
+    @Override
+    public void onLoaderReset(@NonNull Loader<Cursor> loader) {
+        finish();
     }
 }

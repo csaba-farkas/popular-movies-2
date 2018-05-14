@@ -7,11 +7,18 @@ import android.database.sqlite.SQLiteOpenHelper;
 public class PopularMoviesDbHelper extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "popular_movies.db";
-    private static final int DATABASE_VERSION = 4;
+    private static final int DATABASE_VERSION = 5;
 
     public PopularMoviesDbHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
+
+    @Override
+    public void onOpen(SQLiteDatabase db) {
+        super.onOpen(db);
+        db.execSQL("PRAGMA foreign_keys=ON");
+    }
+
     @Override
     public void onCreate(SQLiteDatabase db) {
         final String SQL_CREATE_FAVOURITE_MOVIES_TABLE = "CREATE TABLE " +
@@ -37,7 +44,7 @@ public class PopularMoviesDbHelper extends SQLiteOpenHelper {
                 PopularMoviesDbContract.TrailerEntry.TYPE + " TEXT NON NULL, " +
                 PopularMoviesDbContract.TrailerEntry.MOVIE_ID + " INTEGER, " +
                 "FOREIGN KEY(" + PopularMoviesDbContract.TrailerEntry.MOVIE_ID + ") REFERENCES " +
-                PopularMoviesDbContract.MovieEntry.TABLE_NAME + "(" + PopularMoviesDbContract.MovieEntry._ID + ")" +
+                PopularMoviesDbContract.MovieEntry.TABLE_NAME + "(" + PopularMoviesDbContract.MovieEntry._ID + ") ON DELETE CASCADE" +
                 ");";
 
         db.execSQL(SQL_CREATE_TRAILERS_TABLE);
@@ -50,7 +57,7 @@ public class PopularMoviesDbHelper extends SQLiteOpenHelper {
                 PopularMoviesDbContract.ReviewEntry.CONTENT + " TEXT NON NULL, " +
                 PopularMoviesDbContract.ReviewEntry.MOVIE_ID + " INTEGER, " +
                 "FOREIGN KEY(" + PopularMoviesDbContract.ReviewEntry.MOVIE_ID + ") REFERENCES " +
-                PopularMoviesDbContract.MovieEntry.TABLE_NAME + "(" + PopularMoviesDbContract.MovieEntry._ID + ")" +
+                PopularMoviesDbContract.MovieEntry.TABLE_NAME + "(" + PopularMoviesDbContract.MovieEntry._ID + ") ON DELETE CASCADE" +
                 ");";
 
         db.execSQL(SQL_CREATE_REVIEWS_TABLE);

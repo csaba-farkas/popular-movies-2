@@ -82,6 +82,7 @@
                 android:numStars="1"
                 android:rating="1"
                 style="?android:attr/ratingBarStyleIndicator"
+                android:theme="@style/RatingBar"
                 android:isIndicator="true"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -127,6 +128,7 @@
                 app:layout_constraintBottom_toTopOf="@id/movie_details_plot_tv"
                 app:layout_constraintLeft_toLeftOf="parent"
                 app:layout_constraintRight_toRightOf="parent"
+                android:visibility="gone"
                 android:layout_marginTop="@dimen/margin_medium"
                 android:layout_marginStart="@dimen/margin_medium"
                 android:layout_marginEnd="@dimen/margin_medium"/>
@@ -155,6 +157,7 @@
                 app:layout_constraintBottom_toTopOf="@id/movie_details_trailers_list"
                 app:layout_constraintLeft_toLeftOf="parent"
                 app:layout_constraintRight_toRightOf="parent"
+                android:visibility="gone"
                 android:layout_marginTop="@dimen/margin_medium"
                 android:layout_marginStart="@dimen/margin_medium"
                 android:layout_marginEnd="@dimen/margin_medium" />
@@ -181,6 +184,7 @@
                 app:layout_constraintBottom_toTopOf="@id/movie_details_reviews_list"
                 app:layout_constraintLeft_toLeftOf="parent"
                 app:layout_constraintRight_toRightOf="parent"
+                android:visibility="gone"
                 android:layout_marginTop="@dimen/margin_medium"
                 android:layout_marginStart="@dimen/margin_medium"
                 android:layout_marginEnd="@dimen/margin_medium" />
@@ -200,14 +204,5 @@
 
         </android.support.constraint.ConstraintLayout>
     </android.support.v4.widget.NestedScrollView>
-
-    <!--<android.support.design.widget.FloatingActionButton-->
-        <!--android:id="@+id/movie_details_favourite_fab"-->
-        <!--android:layout_width="wrap_content"-->
-        <!--android:layout_height="wrap_content"-->
-        <!--android:layout_margin="@dimen/margin_large"-->
-        <!--app:pressedTranslationZ="12dp"-->
-        <!--app:layout_anchor="@id/main.appbar"-->
-        <!--app:layout_anchorGravity="bottom|right|end" />-->
 
 </android.support.design.widget.CoordinatorLayout>

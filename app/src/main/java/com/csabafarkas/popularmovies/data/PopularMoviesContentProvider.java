@@ -11,6 +11,8 @@ import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
+import java.util.Objects;
+
 public class PopularMoviesContentProvider extends ContentProvider {
 
     // Integer values for UriMatcher
@@ -65,6 +67,18 @@ public class PopularMoviesContentProvider extends ContentProvider {
                         sortOrder
                 );
                 break;
+            case MOVIE_WITH_ID:
+                String id = uri.getPathSegments().get(1);
+                ret = db.query(
+                        PopularMoviesDbContract.MovieEntry.TABLE_NAME,
+                        projection,
+                        "_id = ?",
+                        new String[] { id },
+                        null,
+                        null,
+                        sortOrder
+                );
+                break;
             case TRAILERS:
                 ret = db.query(
                         PopularMoviesDbContract.TrailerEntry.TABLE_NAME,
@@ -90,6 +104,8 @@ public class PopularMoviesContentProvider extends ContentProvider {
             default:
                 throw new UnsupportedOperationException("Unknown uri " + uri);
         }
+
+
         return ret;
     }
 
@@ -136,13 +152,28 @@ public class PopularMoviesContentProvider extends ContentProvider {
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
         }
 
-        getContext().getContentResolver().notifyChange(uri, null);
+        Objects.requireNonNull(getContext()).getContentResolver().notifyChange(uri, null);
         return ret;
     }
 
     @Override
     public int delete(@NonNull Uri uri, @Nullable String selection, @Nullable String[] selectionArgs) {
-        return 0;
+        final SQLiteDatabase db = dbHelper.getWritableDatabase();
+        int match = uriMatcher.match(uri);
+        int moviesDeleted;
+        switch (match) {
+            case MOVIE_WITH_ID:
+                moviesDeleted = db.delete(PopularMoviesDbContract.MovieEntry.TABLE_NAME, selection, selectionArgs);
+                break;
+            default:
+                throw new UnsupportedOperationException("Unknown uri: " + uri);
+        }
+
+        if (moviesDeleted != 0) {
+            getContext().getContentResolver().notifyChange(uri, null);
+        }
+
+        return moviesDeleted;
     }
 
     @Override

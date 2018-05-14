@@ -15,6 +15,6 @@
     <item
         android:id="@+id/sort_favourite_movies"
         android:orderInCategory="102"
-        android:title="@string/favourite_movies_selection"
+        android:title="@string/menu_item_favourites"
         app:showAsAction="never" />
 </menu>

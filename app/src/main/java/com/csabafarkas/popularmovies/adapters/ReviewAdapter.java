@@ -67,16 +67,23 @@ public class ReviewAdapter extends RecyclerView.Adapter<ReviewAdapter.ReviewAdap
         TextView reviewTextView;
         @BindView(R.id.review_author_text_view)
         TextView authorTextView;
+        @BindView(R.id.review_more_link_text_view)
+        TextView moreLinkTextView;
 
         ReviewAdapterViewHolder(View view) {
             super(view);
             ButterKnife.bind(this, view);
-            view.setOnClickListener(this);
+            moreLinkTextView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    clickHandler.onReviewItemClick(Uri.parse(reviews.get(getAdapterPosition()).getUrl()));
+                }
+            });
         }
 
         @Override
         public void onClick(View v) {
-            clickHandler.onReviewItemClick(Uri.parse(reviews.get(getAdapterPosition()).getUrl()));
+            // clickHandler.onReviewItemClick(Uri.parse(reviews.get(getAdapterPosition()).getUrl()));
         }
     }
 }

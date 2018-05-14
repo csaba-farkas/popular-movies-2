@@ -3,7 +3,7 @@ package com.csabafarkas.popularmovies;
 import android.annotation.SuppressLint;
 import android.support.annotation.NonNull;
 import android.support.v4.app.LoaderManager;
-import android.support.v4.content.AsyncTaskLoader;
+import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.content.Intent;
 import android.database.Cursor;
@@ -28,8 +28,10 @@ import com.csabafarkas.popularmovies.utilites.NetworkUtils;
 import com.csabafarkas.popularmovies.utilites.PopularMoviesHelpers;
 import com.csabafarkas.popularmovies.utilites.PopularMoviesNetworkCallback;
 
-import java.util.List;
+import java.util.ArrayList;
 
+import butterknife.BindInt;
+import butterknife.BindString;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import timber.log.Timber;
@@ -41,10 +43,24 @@ public class MainActivity extends AppCompatActivity
 
     @BindView(R.id.activity_main_root_gv)
     GridView rootView;
+    @BindString(R.string.current_position_key)
+    String currentPositionKey;
+    @BindString(R.string.current_selection_key)
+    String currentSelectionKey;
+    @BindString(R.string.current_movies_key)
+    String currentMoviesKey;
+    @BindString(R.string.page_number_key)
+    String pageNumberKey;
+    @BindInt(R.integer.most_popular_selection)
+    int mostPopularSelected;
+    @BindInt(R.integer.top_rated_selection)
+    int topRatedSelected;
+    @BindInt(R.integer.favourites_selection)
+    int favouritesSelected;
     private int currentSelection;
     private int pageNumber;
     private int currentPosition;
-    private List<Movie> movies;
+    private ArrayList<Movie> movies;
     private boolean loading;
 
     @Override
@@ -60,11 +76,16 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onResume() {
         super.onResume();
-        if (currentSelection == 0) {
-            currentSelection = R.id.sort_most_popular;
+        currentSelection = PopularMoviesHelpers.getSharedPrefInt(this, currentSelectionKey);
+        if (currentSelection == -1) {
+            currentSelection = mostPopularSelected;
+            PopularMoviesHelpers.setSharedPrefInt(this, currentSelectionKey, currentSelection);
         }
         if (movies == null) {
             loadMovies(currentSelection);
+        } else {
+            MovieAdapter movieAdapter = new MovieAdapter(this, 0, movies);
+            rootView.setAdapter(movieAdapter);
         }
 
         // load more on scroll to bottom
@@ -76,6 +97,7 @@ public class MainActivity extends AppCompatActivity
 
             @Override
             public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+                if (firstVisibleItem == 0 && visibleItemCount == 0) return;
                 if (firstVisibleItem + visibleItemCount == totalItemCount && !loading) {
                     loadMovies(currentSelection);
                 }
@@ -87,33 +109,44 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Intent intent = new Intent(MainActivity.this, MovieDetailsActivity.class);
-                // Intent intent = new Intent(MainActivity.this, MovieDetailsTabbedActivity.class);
-                intent.putExtra(getResources().getString(R.string.movie_id_key), movies.get(position).getId().toString());
+                if (currentSelection != favouritesSelected) {
+                    intent.putExtra(getResources().getString(R.string.movie_id_key), movies.get(position).getId().toString());
+                } else {
+                    intent.putExtra(getResources().getString(R.string.movie_key), movies.get(position));
+                }
                 startActivity(intent);
             }
         });
 
         // scroll to current position
-        if (currentPosition >= 0)
+        if (currentPosition >= 0) {
             rootView.smoothScrollToPosition(currentPosition);
+        }
     }
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putInt("current_position", rootView.getFirstVisiblePosition());
-        outState.putInt("current_selection", currentSelection);
+        outState.putInt(pageNumberKey, pageNumber);
+        int currPos = rootView.getFirstVisiblePosition();
+        outState.putInt(currentPositionKey, currPos);
+        if (movies != null) {
+            outState.putParcelableArrayList(currentMoviesKey, movies);
+        }
     }
 
     @Override
     protected void onRestoreInstanceState(Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
 
-        if (savedInstanceState.containsKey("current_position")) {
-            currentPosition = savedInstanceState.getInt("current_position");
+        if (savedInstanceState.containsKey(currentPositionKey)) {
+            currentPosition = savedInstanceState.getInt(currentPositionKey);
         }
-        if (savedInstanceState.containsKey("current_selection")) {
-            currentSelection = savedInstanceState.getInt("current_selection");
+        if (savedInstanceState.containsKey(currentMoviesKey)) {
+            movies = savedInstanceState.getParcelableArrayList(currentMoviesKey);
+        }
+        if (savedInstanceState.containsKey(pageNumberKey)) {
+            pageNumber = savedInstanceState.getInt(pageNumberKey);
         }
     }
 
@@ -123,7 +156,8 @@ public class MainActivity extends AppCompatActivity
         MovieCollection movieCollection = (MovieCollection) popularMoviesModel;
         pageNumber = movieCollection.getPage();
         if (movies == null) {
-            movies = movieCollection.getMovies();
+            movies = new ArrayList<>();
+            movies.addAll(movieCollection.getMovies());
         } else {
             this.movies.addAll(movieCollection.getMovies());
         }
@@ -159,22 +193,25 @@ public class MainActivity extends AppCompatActivity
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.sort_top_rated:
-                if (currentSelection == R.id.sort_top_rated) break;
+                if (currentSelection == topRatedSelected) break;
                 movies.clear();
                 pageNumber = 0;
-                currentSelection = R.id.sort_top_rated;
+                currentSelection = topRatedSelected;
+                PopularMoviesHelpers.setSharedPrefInt(this, currentSelectionKey, currentSelection);
                 loadMovies(currentSelection);
                 break;
             case R.id.sort_most_popular:
-                if (currentSelection == R.id.sort_most_popular) break;
+                if (currentSelection == mostPopularSelected) break;
                 movies.clear();
                 pageNumber = 0;
-                currentSelection = R.id.sort_most_popular;
+                currentSelection = mostPopularSelected;
+                PopularMoviesHelpers.setSharedPrefInt(this, currentSelectionKey, currentSelection);
                 loadMovies(currentSelection);
                 break;
             case R.id.sort_favourite_movies:
-                if (currentSelection == R.id.sort_favourite_movies) break;
-                currentSelection = R.id.sort_favourite_movies;
+                if (currentSelection == favouritesSelected) break;
+                currentSelection = favouritesSelected;
+                PopularMoviesHelpers.setSharedPrefInt(this, currentSelectionKey, currentSelection);
                 loadMovies(currentSelection);
                 break;
             default:
@@ -186,28 +223,27 @@ public class MainActivity extends AppCompatActivity
     private void loadMovies(int currentSelection) {
         loading = true;
         pageNumber++;
-        switch (currentSelection) {
-            case R.id.sort_most_popular:
-                getSupportLoaderManager().destroyLoader(MOVIE_LOADER_ID);
-                NetworkUtils.getMostPopularMovies(BuildConfig.MovieDbApiKey, pageNumber, this);
-                break;
-            case R.id.sort_top_rated:
-                getSupportLoaderManager().destroyLoader(MOVIE_LOADER_ID);
-                NetworkUtils.getTopRatedMovies(BuildConfig.MovieDbApiKey, pageNumber, this);
-                break;
-            case R.id.sort_favourite_movies:
-                getSupportLoaderManager().initLoader(MOVIE_LOADER_ID, null, this);
-                break;
-            default:
-                throw new UnsupportedOperationException("Unknown selection!");
+
+        if (currentSelection == mostPopularSelected) {
+            getSupportLoaderManager().destroyLoader(MOVIE_LOADER_ID);
+            NetworkUtils.getMostPopularMovies(BuildConfig.MovieDbApiKey, pageNumber, this);
+        } else if (currentSelection == topRatedSelected) {
+            getSupportLoaderManager().destroyLoader(MOVIE_LOADER_ID);
+            NetworkUtils.getTopRatedMovies(BuildConfig.MovieDbApiKey, pageNumber, this);
+        } else if (currentSelection == favouritesSelected){
+            // load from SQLite db
+            getSupportLoaderManager().initLoader(MOVIE_LOADER_ID, null, this);
+        } else {
+            throw new UnsupportedOperationException("Unknown selection");
         }
     }
 
     @NonNull
     @SuppressLint("StaticFieldLeak")
     @Override
-    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-        return new AsyncTaskLoader<Cursor>(this) {
+    public Loader<Cursor> onCreateLoader(int id, final Bundle args) {
+        final int loaderId = id;
+        return new CursorLoader(this) {
 
             Cursor cursor = null;
 
@@ -230,7 +266,6 @@ public class MainActivity extends AppCompatActivity
                             null,
                             PopularMoviesDbContract.MovieEntry.TIME_ADDED);
                 } catch (Exception ex) {
-                    Toast.makeText(MainActivity.this, "Failed to load favourite movies.", Toast.LENGTH_SHORT).show();
                     return null;
                 }
             }
@@ -238,11 +273,18 @@ public class MainActivity extends AppCompatActivity
     }
 
     @Override
-    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-        movies = PopularMoviesHelpers.convertMovieCursorToList(data);
+    public void onLoadFinished(@NonNull Loader<Cursor> loader, Cursor data) {
+        if (data != null) {
+            movies = PopularMoviesHelpers.convertMovieCursorToList(data);
+        } else {
+            movies = new ArrayList<>();
+        }
 
         MovieAdapter movieAdapter = new MovieAdapter(this, 0, movies);
         rootView.setAdapter(movieAdapter);
+        if (movies.size() == 0) {
+            Toast.makeText(this, getResources().getString(R.string.no_favourite_movies_found_message), Toast.LENGTH_SHORT).show();
+        }
     }
 
     @Override
