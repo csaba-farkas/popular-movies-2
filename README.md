@@ -1,4 +1,4 @@
-# Popular Movies - Stage 1
+# Popular Movies - Stage 2
 
 You need an MovieDB API key to use this app. Go to https://www.themoviedb.org/ to create your account and apply for an API key.
 
