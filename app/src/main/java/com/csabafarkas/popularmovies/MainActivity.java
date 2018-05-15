@@ -9,13 +9,11 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.GridLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.View;
-import android.widget.AbsListView;
-import android.widget.AdapterView;
-import android.widget.GridView;
 import android.widget.Toast;
 
 import com.csabafarkas.popularmovies.adapters.MovieAdapter;
@@ -37,12 +35,12 @@ import butterknife.ButterKnife;
 import timber.log.Timber;
 
 public class MainActivity extends AppCompatActivity
-        implements PopularMoviesNetworkCallback, LoaderManager.LoaderCallbacks<Cursor> {
+        implements PopularMoviesNetworkCallback, LoaderManager.LoaderCallbacks<Cursor>, MovieAdapter.MovieItemOnClickListener {
 
     private static final int MOVIE_LOADER_ID = 1;
 
-    @BindView(R.id.activity_main_root_gv)
-    GridView rootView;
+    @BindView(R.id.activity_main_movie_grid)
+    RecyclerView movieList;
     @BindString(R.string.current_position_key)
     String currentPositionKey;
     @BindString(R.string.current_selection_key)
@@ -71,6 +69,32 @@ public class MainActivity extends AppCompatActivity
         if (BuildConfig.DEBUG) {
             Timber.plant(new Timber.DebugTree());
         }
+
+        movieList.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
+                super.onScrollStateChanged(recyclerView, newState);
+            }
+
+            @Override
+            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+                if (dy > 0) {
+                    GridLayoutManager layoutManager = (GridLayoutManager) recyclerView.getLayoutManager();
+                    int numberOfColumns = layoutManager.getSpanCount();
+                    int lastVisibleItemPosition = layoutManager.findLastVisibleItemPosition();
+                    int totalMovieCount = 0;
+                    try {
+                        totalMovieCount = movies.size();
+                    } catch (NullPointerException npe) {
+                        npe.printStackTrace();
+                    }
+                    if (lastVisibleItemPosition >= (totalMovieCount - numberOfColumns)) {
+                        loadMovies(currentSelection);
+                    }
+                }
+            }
+        });
     }
 
     @Override
@@ -84,43 +108,16 @@ public class MainActivity extends AppCompatActivity
         if (movies == null) {
             loadMovies(currentSelection);
         } else {
-            MovieAdapter movieAdapter = new MovieAdapter(this, 0, movies);
-            rootView.setAdapter(movieAdapter);
+            MovieAdapter movieAdapter = new MovieAdapter(this, movies, this);
+            GridLayoutManager gridLayoutManager = new GridLayoutManager(this,
+                    PopularMoviesHelpers.calculateNoOfColumns(this));
+            movieList.setLayoutManager(gridLayoutManager);
+            movieList.setAdapter(movieAdapter);
         }
-
-        // load more on scroll to bottom
-        rootView.setOnScrollListener(new AbsListView.OnScrollListener() {
-            @Override
-            public void onScrollStateChanged(AbsListView view, int scrollState) {
-
-            }
-
-            @Override
-            public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
-                if (firstVisibleItem == 0 && visibleItemCount == 0) return;
-                if (firstVisibleItem + visibleItemCount == totalItemCount && !loading) {
-                    loadMovies(currentSelection);
-                }
-            }
-        });
-
-        // add onItemClickListener to GridView
-        rootView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Intent intent = new Intent(MainActivity.this, MovieDetailsActivity.class);
-                if (currentSelection != favouritesSelected) {
-                    intent.putExtra(getResources().getString(R.string.movie_id_key), movies.get(position).getId().toString());
-                } else {
-                    intent.putExtra(getResources().getString(R.string.movie_key), movies.get(position));
-                }
-                startActivity(intent);
-            }
-        });
 
         // scroll to current position
         if (currentPosition >= 0) {
-            rootView.smoothScrollToPosition(currentPosition);
+            movieList.smoothScrollToPosition(currentPosition);
         }
     }
 
@@ -128,7 +125,7 @@ public class MainActivity extends AppCompatActivity
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putInt(pageNumberKey, pageNumber);
-        int currPos = rootView.getFirstVisiblePosition();
+        int currPos = ((GridLayoutManager) movieList.getLayoutManager()).findLastCompletelyVisibleItemPosition();
         outState.putInt(currentPositionKey, currPos);
         if (movies != null) {
             outState.putParcelableArrayList(currentMoviesKey, movies);
@@ -162,11 +159,14 @@ public class MainActivity extends AppCompatActivity
             this.movies.addAll(movieCollection.getMovies());
         }
 
-        if (rootView.getAdapter() == null) {
-            MovieAdapter movieAdapter = new MovieAdapter(this, 0, movies);
-            rootView.setAdapter(movieAdapter);
+        if (movieList.getAdapter() == null) {
+            MovieAdapter movieAdapter = new MovieAdapter(this, movies, this);
+            GridLayoutManager gridLayoutManager = new GridLayoutManager(this,
+                    PopularMoviesHelpers.calculateNoOfColumns(this));
+            movieList.setLayoutManager(gridLayoutManager);
+            movieList.setAdapter(movieAdapter);
         } else {
-            ((MovieAdapter) rootView.getAdapter()).notifyDataSetChanged();
+            movieList.getAdapter().notifyDataSetChanged();
         }
         loading = false;
     }
@@ -174,11 +174,13 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onFailure(RetrofitError retrofitError) {
         Toast.makeText(this, retrofitError.getErrorCode() + " " + retrofitError.getErrorMessage(), Toast.LENGTH_LONG).show();
+        loading = false;
     }
 
     @Override
     public void onError(Throwable t) {
         Toast.makeText(this, t.getMessage(), Toast.LENGTH_LONG).show();
+        loading = false;
 
     }
 
@@ -221,13 +223,16 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void loadMovies(int currentSelection) {
-        loading = true;
         pageNumber++;
 
         if (currentSelection == mostPopularSelected) {
+            if (loading) return;
+            loading = true;
             getSupportLoaderManager().destroyLoader(MOVIE_LOADER_ID);
             NetworkUtils.getMostPopularMovies(BuildConfig.MovieDbApiKey, pageNumber, this);
         } else if (currentSelection == topRatedSelected) {
+            if (loading) return;
+            loading = true;
             getSupportLoaderManager().destroyLoader(MOVIE_LOADER_ID);
             NetworkUtils.getTopRatedMovies(BuildConfig.MovieDbApiKey, pageNumber, this);
         } else if (currentSelection == favouritesSelected){
@@ -242,7 +247,6 @@ public class MainActivity extends AppCompatActivity
     @SuppressLint("StaticFieldLeak")
     @Override
     public Loader<Cursor> onCreateLoader(int id, final Bundle args) {
-        final int loaderId = id;
         return new CursorLoader(this) {
 
             Cursor cursor = null;
@@ -280,15 +284,29 @@ public class MainActivity extends AppCompatActivity
             movies = new ArrayList<>();
         }
 
-        MovieAdapter movieAdapter = new MovieAdapter(this, 0, movies);
-        rootView.setAdapter(movieAdapter);
+        MovieAdapter movieAdapter = new MovieAdapter(this, movies, this);
+        GridLayoutManager gridLayoutManager = new GridLayoutManager(this,
+                PopularMoviesHelpers.calculateNoOfColumns(this));
+        movieList.setLayoutManager(gridLayoutManager);
+        movieList.setAdapter(movieAdapter);
         if (movies.size() == 0) {
             Toast.makeText(this, getResources().getString(R.string.no_favourite_movies_found_message), Toast.LENGTH_SHORT).show();
         }
     }
 
     @Override
-    public void onLoaderReset(Loader<Cursor> loader) {
+    public void onLoaderReset(@NonNull Loader<Cursor> loader) {
         movies.clear();
+    }
+
+    @Override
+    public void onMovieItemClick(int position) {
+        Intent intent = new Intent(MainActivity.this, MovieDetailsActivity.class);
+        if (currentSelection != favouritesSelected) {
+            intent.putExtra(getResources().getString(R.string.movie_id_key), movies.get(position).getId().toString());
+        } else {
+            intent.putExtra(getResources().getString(R.string.movie_key), movies.get(position));
+        }
+        startActivity(intent);
     }
 }

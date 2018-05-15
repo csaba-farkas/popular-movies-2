@@ -192,12 +192,14 @@ public class MovieDetailsActivity extends AppCompatActivity
         TrailerAdapter trailerAdapter;
 
         // add trailers to list adapter - max number of trailers = 5
-        if (movie.getTrailers() == null)
+        if (movie.getTrailers() == null) {
             movie.setTrailers(new ArrayList<Trailer>());
-        if (movie.getTrailers().size() <= 5)
+        }
+        if (movie.getTrailers().size() <= 5) {
             trailerAdapter = new TrailerAdapter(this, movie.getTrailers(), this);
-        else
+        } else {
             trailerAdapter = new TrailerAdapter(this, movie.getTrailers().subList(0, 5), this);
+        }
         trailersList.setAdapter(trailerAdapter);
 
         DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(
@@ -214,41 +216,23 @@ public class MovieDetailsActivity extends AppCompatActivity
         ReviewAdapter reviewAdapter;
 
         // add reviews to lis adapter - max number of reviews = 5
-        if (movie.getReviews() == null)
+        if (movie.getReviews() == null) {
             movie.setReviews(new ArrayList<Review>());
+        }
 
-        if (movie.getReviews().size() <= 20)
+        if (movie.getReviews().size() <= 20) {
             reviewAdapter = new ReviewAdapter(this, movie.getReviews(), this);
-        else
+        } else {
             reviewAdapter = new ReviewAdapter(this, movie.getReviews().subList(0, 20), this);
+        }
         reviewsList.setAdapter(reviewAdapter);
 
         reviewsList.addItemDecoration(dividerItemDecoration);
 
-        adjustConstraintLayoutToView(reviewsList);
+        // adjustConstraintLayoutToView(reviewsList);
         progressBar.setVisibility(View.GONE);
         appBarLayout.setVisibility(View.VISIBLE);
         ratingBar.setVisibility(View.VISIBLE);
-    }
-
-    private void adjustConstraintLayoutToView(final View view) {
-        final ViewTreeObserver viewTreeObserver = view.getViewTreeObserver();
-        viewTreeObserver.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
-            @Override
-            public void onGlobalLayout() {
-                if (constraintLayout.getMeasuredHeight() > 0) {
-                    int[] location = new int[2];
-                    view.getLocationOnScreen(location);
-                    constraintLayout.getLayoutParams().height = location[1];
-                    constraintLayout.requestLayout();
-                    if (viewTreeObserver.isAlive()) {
-                        viewTreeObserver.removeOnGlobalLayoutListener(this);
-                    } else {
-                        view.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-                    }
-                }
-            }
-        });
     }
 
     @Override
@@ -374,7 +358,7 @@ public class MovieDetailsActivity extends AppCompatActivity
                                 PopularMoviesDbContract.TrailerEntry.TRAILERS_CONTENT_URI,
                                 null,
                                 PopularMoviesDbContract.TrailerEntry.MOVIE_ID + " = ?",
-                                new String[] { args.getLong(movieIdKey) + ""},
+                                new String[] { (args != null ? args.getLong(movieIdKey) : 0) + "" },
                                 PopularMoviesDbContract.TrailerEntry.NAME
                         );
                     case REVIEWS_LOADER_ID:
@@ -382,12 +366,13 @@ public class MovieDetailsActivity extends AppCompatActivity
                                 PopularMoviesDbContract.ReviewEntry.REVIEWS_CONTENT_URI,
                                 null,
                                 PopularMoviesDbContract.ReviewEntry.MOVIE_ID + " = ?",
-                                new String[] { args.getLong(movieIdKey) + "" },
+                                new String[] { (args != null ? args.getLong(movieIdKey) : 0) + "" },
                                 null
                         );
                     case MOVIE_LOADER_ID:
                         String movieId;
-                        if ( (movieId = args.getString(movieIdKey)) == null) return null;
+                        if (args == null) return null;
+                        if ((movieId = args.getString(movieIdKey)) == null) return null;
                         Uri movieUri = PopularMoviesDbContract.MovieEntry.MOVIES_CONTENT_URI
                                 .buildUpon()
                                 .appendPath(movieId)

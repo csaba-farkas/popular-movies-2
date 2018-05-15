@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
+import android.util.DisplayMetrics;
 
 import com.csabafarkas.popularmovies.MainActivity;
 import com.csabafarkas.popularmovies.data.PopularMoviesDbContract;
@@ -104,5 +105,11 @@ public class PopularMoviesHelpers {
         SharedPreferences.Editor editor = preferences.edit();
         editor.putInt(key, value);
         editor.apply();
+    }
+
+    public static int calculateNoOfColumns(Context context) {
+        DisplayMetrics displayMetrics = context.getResources().getDisplayMetrics();
+        float dpWidth = displayMetrics.widthPixels / displayMetrics.density;
+        return (int) (dpWidth / 185);
     }
 }

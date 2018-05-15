@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<GridView xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:numColumns="auto_fit"
-    android:verticalSpacing="0dp"
-    android:horizontalSpacing="0dp"
-    android:stretchMode="columnWidth"
-    tools:context="com.csabafarkas.popularmovies.MainActivity"
-    android:id="@+id/activity_main_root_gv">
+    tools:context="com.csabafarkas.popularmovies.MainActivity">
 
-</GridView>
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/activity_main_movie_grid"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+</RelativeLayout>
