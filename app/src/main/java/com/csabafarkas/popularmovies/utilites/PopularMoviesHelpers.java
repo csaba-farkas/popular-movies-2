@@ -110,6 +110,7 @@ public class PopularMoviesHelpers {
     public static int calculateNoOfColumns(Context context) {
         DisplayMetrics displayMetrics = context.getResources().getDisplayMetrics();
         float dpWidth = displayMetrics.widthPixels / displayMetrics.density;
-        return (int) (dpWidth / 185);
+        int ret = (int) (dpWidth / 185);
+        return ret >= 2 ? ret : 2;
     }
 }

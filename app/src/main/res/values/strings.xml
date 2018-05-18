@@ -45,5 +45,9 @@
     <string name="more_link_text">MORE</string>
     <string name="no_favourite_movies_found_message">No favourite movies were found.</string>
     <string name="page_number_key">page_number</string>
+    <string name="no_connection_error">Please check your connection and try again</string>
+    <string name="scroll_view_position_key">scroll_view_position_key</string>
+    <string name="trailers_list_position_key">trailers_list_position_key</string>
+    <string name="reviews_list_position_key">reviews_list_position_key</string>
     <!-- End of miscellaneous -->
 </resources>

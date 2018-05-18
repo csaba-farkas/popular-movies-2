@@ -14,6 +14,7 @@ import android.support.design.widget.AppBarLayout;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
+import android.support.v4.widget.NestedScrollView;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -49,6 +50,9 @@ import butterknife.BindDrawable;
 import butterknife.BindString;
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import icepick.Icepick;
+import icepick.State;
+import timber.log.Timber;
 
 public class MovieDetailsActivity extends AppCompatActivity
             implements PopularMoviesNetworkCallback, TrailerAdapter.TrailerAdapterOnClickListener,
@@ -82,20 +86,40 @@ public class MovieDetailsActivity extends AppCompatActivity
     ConstraintLayout constraintLayout;
     @BindView(R.id.movie_details_favourite_button)
     ImageButton favButton;
+    @BindView(R.id.movie_details_nested_scroll_view)
+    NestedScrollView scrollView;
     @BindString(R.string.youtube_trailer_url)
     String youtubeBaseUrl;
+    @BindString(R.string.unexpected_error)
+    String unExpectedError;
     @BindString(R.string.movie_id_key)
     String movieIdKey;
     @BindString(R.string.movie_key)
     String movieKey;
     @BindString(R.string.favourite_tag)
     String favTag;
+    @BindString(R.string.scroll_view_position_key)
+    String scrollViewPositionKey;
+    @BindString(R.string.trailers_list_position_key)
+    String trailersListPositionKey;
+    @BindString(R.string.reviews_list_position_key)
+    String reviewsListPositionKey;
     @BindDrawable(R.drawable.ic_heart_red)
     Drawable redHeartDrawable;
     @BindDrawable(R.drawable.ic_heart_white)
     Drawable whiteHeartDrawable;
+    @State
+    Movie movie;
+    @State
+    boolean isFavourite;
+    @State
+    int[] scrollViewPosition;
+    @State
+    int trailersPosition;
+    @State
+    int reviewsPosition;
+    private boolean isSavedInstanceStateNull;
     private String movieId;
-    private Movie movie;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -103,30 +127,88 @@ public class MovieDetailsActivity extends AppCompatActivity
         setContentView(R.layout.activity_movie_details);
         ButterKnife.bind(this);
 
-        if (getIntent() == null) return;
+        if (savedInstanceState == null) {
+            isSavedInstanceStateNull = true;
+            if (getIntent() == null) return;
 
-        // get the movie id from the intent
-        if (getIntent().hasExtra(movieIdKey)) {
-            movieId = getIntent().getStringExtra(movieIdKey);
-            if (movieId == null) {
-                Toast.makeText(getBaseContext(), getResources().getString(R.string.unexpected_error), Toast.LENGTH_SHORT).show();
-                finish();
+            // get the movie id from the intent
+            if (getIntent().hasExtra(movieIdKey)) {
+                movieId = getIntent().getStringExtra(movieIdKey);
+                if (movieId == null) {
+                    Toast.makeText(getBaseContext(), getResources().getString(R.string.unexpected_error), Toast.LENGTH_SHORT).show();
+                    finish();
+                }
+
+                NetworkUtils.getMovie(BuildConfig.MovieDbApiKey, movieId, this);
+                favButton.setTag("");
+            } else if (getIntent().hasExtra(movieKey)) {
+                movie = getIntent().getParcelableExtra(movieKey);
+                Bundle args = new Bundle();
+                args.putLong(movieIdKey, movie.getId());
+                getSupportLoaderManager().initLoader(TRAILERS_LOADER_ID, args, this);
+                favButton.setImageResource(R.drawable.ic_heart_red);
+                favButton.setTag(favTag);
             }
 
-            NetworkUtils.getMovie(BuildConfig.MovieDbApiKey, movieId, this);
-            favButton.setTag("");
-        } else if (getIntent().hasExtra(movieKey)) {
-            movie = getIntent().getParcelableExtra(movieKey);
             Bundle args = new Bundle();
-            args.putLong(movieIdKey, movie.getId());
-            getSupportLoaderManager().initLoader(TRAILERS_LOADER_ID, args, this);
-            favButton.setImageResource(R.drawable.ic_heart_red);
-            favButton.setTag(favTag);
+            args.putString(movieIdKey, movieId);
+            getSupportLoaderManager().initLoader(MOVIE_LOADER_ID, args, this);
+        } else {
+            isSavedInstanceStateNull = false;
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (!isSavedInstanceStateNull) {
+            updateUI();
+        }
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        isFavourite = favButton.getTag() == favTag;
+        if (scrollView != null) {
+            // maintain scrollview positions
+            scrollViewPosition = new int[]{
+                    scrollView.getScrollX(),
+                    scrollView.getScrollY()
+            };
         }
 
-        Bundle args = new Bundle();
-        args.putString(movieIdKey, movieId);
-        getSupportLoaderManager().initLoader(MOVIE_LOADER_ID, args, this);
+        if (trailersList != null) {
+            if (trailersList.getLayoutManager() != null) {
+                trailersPosition = ((LinearLayoutManager) trailersList.getLayoutManager()).findFirstVisibleItemPosition();
+            }
+        }
+
+        if (reviewsList != null) {
+            if (reviewsList.getLayoutManager() != null) {
+                reviewsPosition = ((LinearLayoutManager) reviewsList.getLayoutManager()).findFirstVisibleItemPosition();
+            }
+        }
+        Icepick.saveInstanceState(this, outState);
+
+
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        Icepick.restoreInstanceState(this, savedInstanceState);
+        if (isFavourite) {
+            favButton.setTag(favTag);
+        } else {
+            favButton.setTag("");
+        }
+//        // restore scrollview position
+//        scrollViewPosition = savedInstanceState.getIntArray(scrollViewPositionKey);
+//
+//        // restore recycerview positions
+//        trailersPosition = savedInstanceState.getInt(trailersListPositionKey);
+//        reviewsPosition = savedInstanceState.getInt(reviewsListPositionKey);
     }
 
     @Override
@@ -167,6 +249,10 @@ public class MovieDetailsActivity extends AppCompatActivity
     }
 
     private void updateUI() {
+        if (movie == null) {
+            Toast.makeText(this, unExpectedError, Toast.LENGTH_SHORT).show();
+            return;
+        }
         String baseUrl = getResources().getString(R.string.poster_base_url_185);
         Picasso.with(this)
                 .load(String.format(baseUrl, movie.getPosterPath()))
@@ -229,10 +315,49 @@ public class MovieDetailsActivity extends AppCompatActivity
 
         reviewsList.addItemDecoration(dividerItemDecoration);
 
-        // adjustConstraintLayoutToView(reviewsList);
+        if (favButton.getTag().equals(favTag)) {
+            favButton.setImageResource(R.drawable.ic_heart_red);
+        } else {
+            favButton.setImageResource(R.drawable.ic_heart_white);
+        }
+
+        adjustConstraintLayoutToView(reviewsList);
         progressBar.setVisibility(View.GONE);
         appBarLayout.setVisibility(View.VISIBLE);
         ratingBar.setVisibility(View.VISIBLE);
+
+        if (scrollViewPosition != null) {
+            scrollView.smoothScrollTo(scrollViewPosition[0], scrollViewPosition[1]);
+            scrollView.post(new Runnable() {
+                @Override
+                public void run() {
+                    scrollView.scrollTo(scrollViewPosition[0], scrollViewPosition[1]);
+                }
+            });
+        }
+
+        trailersList.smoothScrollToPosition(trailersPosition);
+        reviewsList.smoothScrollToPosition(reviewsPosition);
+    }
+
+    private void adjustConstraintLayoutToView(final View view) {
+        final ViewTreeObserver viewTreeObserver = view.getViewTreeObserver();
+        viewTreeObserver.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                if (constraintLayout.getMeasuredHeight() > 0) {
+                    int[] location = new int[2];
+                    view.getLocationOnScreen(location);
+                    constraintLayout.getLayoutParams().height = location[1];
+                    constraintLayout.requestLayout();
+                    if (viewTreeObserver.isAlive()) {
+                        viewTreeObserver.removeOnGlobalLayoutListener(this);
+                    } else {
+                        view.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                    }
+                }
+            }
+        });
     }
 
     @Override

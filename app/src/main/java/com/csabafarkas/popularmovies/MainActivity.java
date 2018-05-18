@@ -49,6 +49,8 @@ public class MainActivity extends AppCompatActivity
     String currentMoviesKey;
     @BindString(R.string.page_number_key)
     String pageNumberKey;
+    @BindString(R.string.no_connection_error)
+    String noConnectionError;
     @BindInt(R.integer.most_popular_selection)
     int mostPopularSelected;
     @BindInt(R.integer.top_rated_selection)
@@ -125,7 +127,12 @@ public class MainActivity extends AppCompatActivity
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putInt(pageNumberKey, pageNumber);
-        int currPos = ((GridLayoutManager) movieList.getLayoutManager()).findLastCompletelyVisibleItemPosition();
+        int currPos;
+        try {
+            currPos = ((GridLayoutManager) movieList.getLayoutManager()).findLastCompletelyVisibleItemPosition();
+        } catch (NullPointerException npe) {
+            currPos = -1;
+        }
         outState.putInt(currentPositionKey, currPos);
         if (movies != null) {
             outState.putParcelableArrayList(currentMoviesKey, movies);
@@ -174,12 +181,14 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onFailure(RetrofitError retrofitError) {
         Toast.makeText(this, retrofitError.getErrorCode() + " " + retrofitError.getErrorMessage(), Toast.LENGTH_LONG).show();
+        pageNumber--;
         loading = false;
     }
 
     @Override
     public void onError(Throwable t) {
-        Toast.makeText(this, t.getMessage(), Toast.LENGTH_LONG).show();
+        Toast.makeText(this, noConnectionError, Toast.LENGTH_LONG).show();
+        pageNumber--;
         loading = false;
 
     }
@@ -196,7 +205,11 @@ public class MainActivity extends AppCompatActivity
         switch (item.getItemId()) {
             case R.id.sort_top_rated:
                 if (currentSelection == topRatedSelected) break;
-                movies.clear();
+                try {
+                    movies.clear();
+                } catch (NullPointerException npe) {
+                    movies = new ArrayList<>();
+                }
                 pageNumber = 0;
                 currentSelection = topRatedSelected;
                 PopularMoviesHelpers.setSharedPrefInt(this, currentSelectionKey, currentSelection);
@@ -204,7 +217,11 @@ public class MainActivity extends AppCompatActivity
                 break;
             case R.id.sort_most_popular:
                 if (currentSelection == mostPopularSelected) break;
-                movies.clear();
+                try {
+                    movies.clear();
+                } catch (NullPointerException npe) {
+                    movies = new ArrayList<>();
+                }
                 pageNumber = 0;
                 currentSelection = mostPopularSelected;
                 PopularMoviesHelpers.setSharedPrefInt(this, currentSelectionKey, currentSelection);
