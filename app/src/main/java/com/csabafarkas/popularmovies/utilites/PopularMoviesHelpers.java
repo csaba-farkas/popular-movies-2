@@ -7,7 +7,6 @@ import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.util.DisplayMetrics;
 
-import com.csabafarkas.popularmovies.MainActivity;
 import com.csabafarkas.popularmovies.data.PopularMoviesDbContract;
 import com.csabafarkas.popularmovies.models.Movie;
 import com.csabafarkas.popularmovies.models.Review;

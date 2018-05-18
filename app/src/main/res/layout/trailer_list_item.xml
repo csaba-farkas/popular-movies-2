@@ -17,6 +17,7 @@
             android:layout_marginBottom="@dimen/margin_small"
             android:layout_marginTop="@dimen/margin_large"
             android:src="@drawable/ic_play_button"
+            android:contentDescription="@string/play_button_description"
             app:layout_constraintBottom_toTopOf="@id/trailer_title_text_view"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"

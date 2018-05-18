@@ -24,7 +24,6 @@
         >
 
         <android.support.design.widget.CollapsingToolbarLayout
-            android:id="@+id/main.collapsing"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:layout_scrollFlags="scroll|exitUntilCollapsed"
@@ -118,21 +117,6 @@
                 app:layout_constraintVertical_chainStyle="spread"
                 tools:text="17 February 1984" />
 
-            <!--<TextView-->
-                <!--android:id="@+id/movie_details_plot_heading"-->
-                <!--android:layout_width="match_parent"-->
-                <!--android:layout_height="wrap_content"-->
-                <!--android:text="@string/plot_title"-->
-                <!--android:textSize="@dimen/text_large"-->
-                <!--app:layout_constraintTop_toBottomOf="@id/movie_details_rating_bar"-->
-                <!--app:layout_constraintBottom_toTopOf="@id/movie_details_plot_tv"-->
-                <!--app:layout_constraintLeft_toLeftOf="parent"-->
-                <!--app:layout_constraintRight_toRightOf="parent"-->
-                <!--android:visibility="gone"-->
-                <!--android:layout_marginTop="@dimen/margin_medium"-->
-                <!--android:layout_marginStart="@dimen/margin_medium"-->
-                <!--android:layout_marginEnd="@dimen/margin_medium"/>-->
-
             <TextView
                 android:id="@+id/movie_details_plot_tv"
                 android:layout_width="match_parent"
@@ -146,21 +130,6 @@
                 app:layout_constraintTop_toBottomOf="@id/movie_details_rating_bar"
                 app:layout_constraintBottom_toTopOf="@id/movie_details_trailers_list"
                 tools:text="@string/lorem" />
-
-            <!--<TextView-->
-                <!--android:id="@+id/movie_details_trailers_heading"-->
-                <!--android:layout_width="match_parent"-->
-                <!--android:layout_height="wrap_content"-->
-                <!--android:text="@string/trailers_title"-->
-                <!--android:textSize="@dimen/text_large"-->
-                <!--app:layout_constraintTop_toBottomOf="@id/movie_details_plot_tv"-->
-                <!--app:layout_constraintBottom_toTopOf="@id/movie_details_trailers_list"-->
-                <!--app:layout_constraintLeft_toLeftOf="parent"-->
-                <!--app:layout_constraintRight_toRightOf="parent"-->
-                <!--android:visibility="gone"-->
-                <!--android:layout_marginTop="@dimen/margin_medium"-->
-                <!--android:layout_marginStart="@dimen/margin_medium"-->
-                <!--android:layout_marginEnd="@dimen/margin_medium" />-->
 
             <android.support.v7.widget.RecyclerView
                 android:id="@+id/movie_details_trailers_list"

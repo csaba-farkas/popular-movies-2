@@ -52,7 +52,6 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import icepick.Icepick;
 import icepick.State;
-import timber.log.Timber;
 
 public class MovieDetailsActivity extends AppCompatActivity
             implements PopularMoviesNetworkCallback, TrailerAdapter.TrailerAdapterOnClickListener,
@@ -180,18 +179,16 @@ public class MovieDetailsActivity extends AppCompatActivity
 
         if (trailersList != null) {
             if (trailersList.getLayoutManager() != null) {
-                trailersPosition = ((LinearLayoutManager) trailersList.getLayoutManager()).findFirstVisibleItemPosition();
+                trailersPosition = ((LinearLayoutManager) trailersList.getLayoutManager()).findLastVisibleItemPosition();
             }
         }
 
         if (reviewsList != null) {
             if (reviewsList.getLayoutManager() != null) {
-                reviewsPosition = ((LinearLayoutManager) reviewsList.getLayoutManager()).findFirstVisibleItemPosition();
+                reviewsPosition = ((LinearLayoutManager) reviewsList.getLayoutManager()).findLastVisibleItemPosition();
             }
         }
         Icepick.saveInstanceState(this, outState);
-
-
     }
 
     @Override
@@ -203,12 +200,6 @@ public class MovieDetailsActivity extends AppCompatActivity
         } else {
             favButton.setTag("");
         }
-//        // restore scrollview position
-//        scrollViewPosition = savedInstanceState.getIntArray(scrollViewPositionKey);
-//
-//        // restore recycerview positions
-//        trailersPosition = savedInstanceState.getInt(trailersListPositionKey);
-//        reviewsPosition = savedInstanceState.getInt(reviewsListPositionKey);
     }
 
     @Override

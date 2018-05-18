@@ -2,7 +2,6 @@ package com.csabafarkas.popularmovies.utilites;
 
 import android.support.annotation.NonNull;
 
-import com.csabafarkas.popularmovies.BuildConfig;
 import com.csabafarkas.popularmovies.models.Movie;
 import com.csabafarkas.popularmovies.models.MovieCollection;
 import com.csabafarkas.popularmovies.models.RetrofitError;
