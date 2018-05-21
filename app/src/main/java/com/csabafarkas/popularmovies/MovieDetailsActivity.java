@@ -112,8 +112,6 @@ public class MovieDetailsActivity extends AppCompatActivity
     @State
     boolean isFavourite;
     @State
-    int[] scrollViewPosition;
-    @State
     int trailersPosition;
     @State
     int reviewsPosition;
@@ -169,13 +167,6 @@ public class MovieDetailsActivity extends AppCompatActivity
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         isFavourite = favButton.getTag() == favTag;
-        if (scrollView != null) {
-            // maintain scrollview positions
-            scrollViewPosition = new int[]{
-                    scrollView.getScrollX(),
-                    scrollView.getScrollY()
-            };
-        }
 
         if (trailersList != null) {
             if (trailersList.getLayoutManager() != null) {
@@ -316,16 +307,6 @@ public class MovieDetailsActivity extends AppCompatActivity
         progressBar.setVisibility(View.GONE);
         appBarLayout.setVisibility(View.VISIBLE);
         ratingBar.setVisibility(View.VISIBLE);
-
-        if (scrollViewPosition != null) {
-            scrollView.smoothScrollTo(scrollViewPosition[0], scrollViewPosition[1]);
-            scrollView.post(new Runnable() {
-                @Override
-                public void run() {
-                    scrollView.scrollTo(scrollViewPosition[0], scrollViewPosition[1]);
-                }
-            });
-        }
 
         trailersList.smoothScrollToPosition(trailersPosition);
         reviewsList.smoothScrollToPosition(reviewsPosition);
